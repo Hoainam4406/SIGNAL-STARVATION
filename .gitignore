@@ -1,0 +1,41 @@
+datasets/
+*.pkl
+*.parquet
+
+
+results/*/model.zip          # SB3 saved models
+results/*/replay_buffer.pkl  # DQN replay buffer (~GB)
+checkpoints/
+*.zip                        # SB3 model files
+
+tb_logs/
+tb_sanity/
+runs/
+**/tb_*/
+
+
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+.ipynb_checkpoints/
+# Nếu muốn bỏ hết output: dùng nbstripout (cài riêng)
+
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+*.log
+audit_reports/logs/*.csv    # CSV raw logs (nặng, giữ report .md thôi)
+audit_reports/logs/*.png    # PNG plots raw
+scratch/
+tmp/
