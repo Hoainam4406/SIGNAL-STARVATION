@@ -220,27 +220,37 @@
 ---
 
 ### TASK-103 · Phân tích Topological Complexity — Map Profiler
-- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO
-- **Branch:** `feature/env-audit-baseline`
-- **Mô tả:** Tính toán và phân loại $C_{topo}$ từ grid JSON files để dùng làm biến thực nghiệm V2.
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ✅ DONE
+- **Branch:** eature/env-audit-baseline
+- **Mô tả:** Tính toán và phân loại {topo}$ từ grid JSON files để dùng làm biến thực nghiệm V2.
 - **Chi tiết thực thi:**
-  - Viết `src/experiment/map_profiler.py`:
-    - Đọc grid `.json` → trích xuất `free_cells`, `main_cells`, `main_frac`, `W`, `H`, `cell_m`
-    - Tính **obstacle density**: `1 - main_frac` (tỷ lệ ô không đi được)
-    - Tính **navigable area** (m²): `main_cells × cell_m²`
-    - Phân loại map complexity: Small/Medium/Large dựa trên `main_m2`
-  - Chạy profiler trên toàn bộ maps trong `grid-turtlebot4-v2`:
-    - Xuất `audit_reports/map_complexity_profile.csv`
-    - Plot distribution của `main_frac`, `main_m2`, `free_cells`
-  - Lập bảng phân nhóm:
-    | Nhóm | Tiêu chí | Số maps (ước tính) |
-    |---|---|---|
-    | Small | `main_m2 < ?` | ? |
-    | Medium | `? ≤ main_m2 < ?` | ? |
-    | Large | `main_m2 ≥ ?` | ? |
+  - Đã viết src/experiment/map_profiler.py:
+    - Đọc grid .json → trích xuất ree_cells, main_cells, main_frac, W, H, cell_m
+    - Tính **obstacle density**: 1 - main_frac (tỷ lệ ô không đi được, mean=0.0907)
+    - Tính **navigable area** (m²): main_cells × cell_m² (range: [11.02, 145.41] m², mean=42.66 m²)
+    - Phân loại map complexity: Small/Medium/Large dựa trên main_m2
+  - Đã chạy profiler trên toàn bộ 138 maps trong grid-turtlebot4-v2:
+    - Xuất udit_reports/map_complexity_profile.csv (138 maps)
+    - Xuất udit_reports/task_complexity_profile.csv (2,760 tasks)
+    - Plot distribution của main_frac, main_m2, ree_cells xuất tại udit_reports/map_distribution.png và udit_reports/logs/map_complexity_distribution.png
+    - Plot distribution của tasks theo sa_uniform, d_bfs, level xuất tại udit_reports/task_distribution.png
+  - Bảng phân nhóm Map Scale ({topo}$):
+    | Nhóm | Tiêu chí (Tertile) | Tiêu chí (Ngưỡng tròn) | Số maps | Tỷ lệ (%) |
+    |---|---|---|---|---|
+    | **Small** | main_m2 < 28.34 m² | main_m2 < 30.0 m² | 46 (tertile) / 51 (tròn) | 33.3% / 37.0% |
+    | **Medium** | 28.34 ≤ main_m2 < 46.27 m² | 30.0 ≤ main_m2 < 50.0 m² | 46 (tertile) / 50 (tròn) | 33.3% / 36.2% |
+    | **Large** | main_m2 ≥ 46.27 m² | main_m2 ≥ 50.0 m² | 46 (tertile) / 37 (tròn) | 33.3% / 26.8% |
+  - Bảng phân loại Tasks ($ho_{sig}$ - Độ khó môi trường thực tế):
+    | Nhóm (Level) | Tiêu chí \_uniform$ | Số tasks | Tỷ lệ (%) | {bfs}$ (mean) | \_uniform$ (mean) |
+    |---|---|---|---|---|---|
+    | **easy** | \_uniform \ge 0.10$ | 953 | 34.5% | 9.4 cells | 0.2946 |
+    | **medium** | .001 \le sa\_uniform < 0.10$ | 938 | 34.0% | 21.1 cells | 0.0268 |
+    | **hard** | .0001 \le sa\_uniform < 0.001$ | 265 | 9.6% | 31.8 cells | 0.0004 |
+    | **starved** | \_uniform < 0.0001$ | 604 | 21.9% | 44.2 cells | 0.000015 |
 - **Tiêu chí DoD:**
-  - Có bảng phân loại map với ngưỡng cụ thể dựa trên dữ liệu thực
-  - Plot distribution xuất được
+  - Có bảng phân loại tasks dựa trên dữ liệu thực ✅
+  - Plot distribution xuất được ✅ (udit_reports/map_distribution.png, udit_reports/task_distribution.png)
+  - Unit tests 	ests/test_map_profiler.py PASS ✅ (3/3 passed)
 - **Ước tính:** 3–5 giờ
 
 ---
