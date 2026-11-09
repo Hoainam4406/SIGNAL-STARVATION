@@ -304,27 +304,26 @@
 ---
 
 ### TASK-202 · Implement RewardFactory — Modular Reward System
-- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ✅ DONE
 - **Branch:** `feature/reward-design`
 - **Mô tả:** Code hệ thống reward pluggable dùng `navsim.wrappers.Reward` API.
 - **Chi tiết thực thi:**
-  - Tạo `src/rewards/base_reward.py`: abstract class `BaseReward`
-  - Implement 6 reward classes (R1–R6) kế thừa `BaseReward`
-    - Các reward dùng `state` (RobotState) và `info` dict từ NavSim
-    - R3/R4 dùng `info['d_bfs']` — đã có sẵn trong step info
-  - Tạo `src/rewards/reward_factory.py`: factory function đọc config YAML → instantiate
+  - Đã tạo `src/rewards/base_reward.py`: abstract class `BaseReward`
+  - Đã implement 6 reward classes (R1–R6) kế thừa `BaseReward`:
+    - `PureSparseReward` (R1)
+    - `CollisionPenalizedSparseReward` (R2)
+    - `DistanceBasedDenseReward` (R3)
+    - `ProgressDenseReward` (R4)
+    - `ProgressGoalReward` (R5)
+    - `PotentialBasedShapedReward` (R6)
+  - R3/R4 sử dụng `info['d_bfs']` và `info['progress']` / `info['goal_geodesic']`
+  - Đã tạo `src/rewards/reward_factory.py`: `make_reward`, `wrap_env_with_reward`, `register_reward`
   - Wrapper: `navsim.wrappers.Reward(env, lambda state, info: reward_fn(state, info))`
-  - Viết unit tests `tests/test_rewards.py`
-  - Mẫu YAML config:
-    ```yaml
-    reward:
-      type: "progress_dense"  # R4
-      goal_bonus: 10.0
-      step_penalty: -0.01
-    ```
+  - Unit tests: `tests/test_rewards.py` (29 tests PASS, chạy 100 steps với mỗi reward type không crash)
+  - File mẫu: `configs/reward_r4.yaml`
 - **Tiêu chí DoD:**
-  - `pytest tests/test_rewards.py` PASS
-  - Chạy 100 steps với mỗi reward type không crash
+  - `pytest tests/test_rewards.py` PASS ✅ (29 passed in 0.80s)
+  - Chạy 100 steps với mỗi reward type không crash ✅ (6/6 reward types passed)
 - **Ước tính:** 4–6 giờ
 
 ---
