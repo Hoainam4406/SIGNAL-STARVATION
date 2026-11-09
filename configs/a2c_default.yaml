@@ -1,0 +1,11 @@
+# Mnih et al. (2016) — Asynchronous Methods for Deep Reinforcement Learning (arXiv:1602.01783)
+# Synchronous Advantage Actor-Critic baseline for fast discrete action-space rollouts
+algorithm: a2c
+policy: MlpPolicy
+learning_rate: 7.0e-4
+n_steps: 5
+gamma: 0.99
+gae_lambda: 1.0
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5

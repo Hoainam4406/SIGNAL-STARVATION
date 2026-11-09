@@ -1,0 +1,14 @@
+# Mnih et al. (2015) — Human-level control through deep reinforcement learning (Nature doi:10.1038/nature14236)
+# Off-policy Q-learning with experience replay buffer and target network
+algorithm: dqn
+policy: MlpPolicy
+learning_rate: 1.0e-4
+buffer_size: 100_000
+learning_starts: 10_000
+batch_size: 32
+tau: 1.0
+gamma: 0.99
+train_freq: 4
+target_update_interval: 1000
+exploration_fraction: 0.1
+exploration_final_eps: 0.05
