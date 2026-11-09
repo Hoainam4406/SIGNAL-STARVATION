@@ -422,7 +422,7 @@ ho_{sig}$ - Độ khó môi trường thực tế):
 ---
 
 ### TASK-302 · Cấu hình Hyperparameters — YAML Configs cho 3 Thuật toán
-- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ✅ DONE
 - **Branch:** `feature/sb3-setup`
 - **Mô tả:** Thiết lập file YAML hyperparameters chuẩn theo paper gốc cho PPO, DQN, A2C. Đây là bước thay thế cho "implement agent" — cấu hình đúng là đảm bảo tính khoa học.
 - **Chi tiết thực thi:**
