@@ -1,0 +1,33 @@
+============================================================
+ENVIRONMENT & DEPENDENCY VERIFICATION
+============================================================
+
+[Environment Variables]
+NAVSIM_DATASETS: F:\navsim\datasets
+  -> Path exists: True (F:\navsim\datasets)
+
+[Packages & Dependencies]
+  [OK] navsim               : 0.1.0
+  [OK] gymnasium            : 1.4.0
+  [OK] numpy                : 2.3.5
+  [OK] scipy                : 1.17.1
+  [OK] numba                : 0.63.1
+  [OK] matplotlib           : 3.10.8
+  [OK] pettingzoo           : 1.27.0
+  [OK] torch                : 2.15.0+cpu
+  [OK] stable-baselines3    : 2.9.2
+  [OK] sb3-contrib          : 2.9.2
+  [OK] pandas               : 2.3.3
+  [OK] seaborn              : 0.13.2
+  [OK] tensorboard          : 2.21.0
+  [OK] pyyaml               : 6.0.3
+  [OK] omegaconf            : 2.4.0
+  [OK] statsmodels          : 0.15.0
+
+[PyTorch Acceleration]
+  CUDA Available : False
+  Device Count   : 0
+  Active Device  : CPU
+============================================================
+RESULT: ALL REQUIRED PACKAGES VERIFIED SUCCESSFULLY!
+============================================================
