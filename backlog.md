@@ -386,7 +386,7 @@ ho_{sig}$ - Độ khó môi trường thực tế):
 > Dù dùng SB3, **Sanity Check và Reproduction Verification vẫn BẮT BUỘC** theo `research_protocol.md` — đây là minh chứng khoa học rằng pipeline hoạt động đúng trên môi trường cụ thể của dự án.
 
 ### TASK-301 · Cài đặt Stable-Baselines3 & Xác minh Tương thích
-- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ✅ DONE
 - **Branch:** `feature/sb3-setup`
 - **Mô tả:** Cài SB3 + các dependencies DRL, xác nhận tương thích hoàn toàn với NavSim GridNav-v0.
 - **Lý do chọn SB3:**
