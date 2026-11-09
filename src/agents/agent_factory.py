@@ -54,7 +54,7 @@ def make_agent(
     Args:
         config: Path to a YAML configuration file or a config dictionary.
         env: Gymnasium environment instance.
-        **kwargs: Optional runtime overrides (e.g. seed, tensorboard_log, verbose).
+        **kwargs: Optional runtime overrides (e.g. seed, tensorboard_log, verbose, device).
 
     Returns:
         BaseAlgorithm: An initialized SB3 algorithm instance (PPO, DQN, or A2C).
@@ -85,5 +85,13 @@ def make_agent(
             cfg["learning_rate"] = float(cfg["learning_rate"])
         except ValueError:
             pass
+
+    # Configure compute device (GPU acceleration when available)
+    if "device" not in cfg:
+        try:
+            import torch
+            cfg["device"] = "cuda" if torch.cuda.is_available() else "auto"
+        except ImportError:
+            cfg["device"] = "auto"
 
     return algo_cls(policy=policy, env=env, **cfg)

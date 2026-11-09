@@ -12,3 +12,4 @@ clip_range: 0.2
 ent_coef: 0.01       # > 0 để khuyến khích exploration với sparse reward
 vf_coef: 0.5
 max_grad_norm: 0.5
+device: auto
