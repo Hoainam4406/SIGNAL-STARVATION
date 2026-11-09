@@ -1,0 +1,2 @@
+algorithm,dataset,robot,reward_type,level_filter,n_samples,seeds,total_reward_mean_std,success_mean_std,steps_to_goal_mean_std,collision_count_mean_std,spl_mean_std,mean_progress_mean_std,sa_uniform_mean_mean_std,training_time_s_mean_std
+PPO,navsim_mini,differential_drive,sparse,all,12,"42,123,999",35.500 ± 8.152,0.500 ± 0.522,117.500 ± 33.945,1.000 ± 1.044,0.390 ± 0.407,0.700 ± 0.261,0.620 ± 0.000,0.875 ± 0.392

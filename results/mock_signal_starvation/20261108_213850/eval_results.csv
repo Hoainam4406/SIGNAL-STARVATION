@@ -1,0 +1,7 @@
+experiment_id,seed,algorithm,dataset,robot,reward_type,level_filter,episode,total_reward,success,steps_to_goal,collision_count,spl,mean_progress,sa_uniform_mean,training_time_s,eval_timestamp
+mock_signal_starvation_PPO_s42_20261108_213850,42,PPO,navsim_mini,differential_drive,sparse,all,2,25.0,0,150,2,0.0,0.45,0.62,0.5,2026-11-08T21:38:50.113516
+mock_signal_starvation_PPO_s42_20261108_213850,42,PPO,navsim_mini,differential_drive,sparse,all,5,40.0,1,85,0,0.78,0.95,0.62,1.25,2026-11-08T21:38:50.119036
+mock_signal_starvation_PPO_s123_20261108_213850,123,PPO,navsim_mini,differential_drive,sparse,all,2,29.0,0,150,2,0.0,0.45,0.62,0.5,2026-11-08T21:38:50.195958
+mock_signal_starvation_PPO_s123_20261108_213850,123,PPO,navsim_mini,differential_drive,sparse,all,5,44.0,1,85,0,0.78,0.95,0.62,1.25,2026-11-08T21:38:50.199638
+mock_signal_starvation_PPO_s999_20261108_213850,999,PPO,navsim_mini,differential_drive,sparse,all,2,30.0,0,150,2,0.0,0.45,0.62,0.5,2026-11-08T21:38:50.273668
+mock_signal_starvation_PPO_s999_20261108_213850,999,PPO,navsim_mini,differential_drive,sparse,all,5,45.0,1,85,0,0.78,0.95,0.62,1.25,2026-11-08T21:38:50.277341

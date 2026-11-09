@@ -1,0 +1,14 @@
+{
+    "experiment_id": "mock_signal_starvation_PPO_s999_20261108_213948",
+    "experiment_name": "mock_signal_starvation",
+    "timestamp": "20261108_213948",
+    "seed": 999,
+    "algorithm": "PPO",
+    "dataset": "navsim_mini",
+    "robot": "differential_drive",
+    "reward_type": "sparse",
+    "level_filter": "all",
+    "config_hash": "c934862039858b7f",
+    "git_commit_hash": "74c91ec8c84c09383611801a9cd3d741a8d08c13",
+    "run_dir": "C:\\SIGNAL-STARVATION\\results\\mock_signal_starvation\\20261108_213948"
+}

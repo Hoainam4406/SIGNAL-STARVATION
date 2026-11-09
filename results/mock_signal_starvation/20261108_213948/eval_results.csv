@@ -1,0 +1,3 @@
+experiment_id,seed,algorithm,dataset,robot,reward_type,level_filter,episode,total_reward,success,steps_to_goal,collision_count,spl,mean_progress,sa_uniform_mean,training_time_s,eval_timestamp
+mock_signal_starvation_PPO_s999_20261108_213948,999,PPO,navsim_mini,differential_drive,sparse,all,2,30.0,0,150,2,0.0,0.45,0.62,0.5,2026-11-08T21:39:48.384054
+mock_signal_starvation_PPO_s999_20261108_213948,999,PPO,navsim_mini,differential_drive,sparse,all,5,45.0,1,85,0,0.78,0.95,0.62,1.25,2026-11-08T21:39:48.420862
