@@ -240,7 +240,8 @@
     | **Small** | main_m2 < 28.34 m² | main_m2 < 30.0 m² | 46 (tertile) / 51 (tròn) | 33.3% / 37.0% |
     | **Medium** | 28.34 ≤ main_m2 < 46.27 m² | 30.0 ≤ main_m2 < 50.0 m² | 46 (tertile) / 50 (tròn) | 33.3% / 36.2% |
     | **Large** | main_m2 ≥ 46.27 m² | main_m2 ≥ 50.0 m² | 46 (tertile) / 37 (tròn) | 33.3% / 26.8% |
-  - Bảng phân loại Tasks ($ho_{sig}$ - Độ khó môi trường thực tế):
+  - Bảng phân loại Tasks ($
+ho_{sig}$ - Độ khó môi trường thực tế):
     | Nhóm (Level) | Tiêu chí \_uniform$ | Số tasks | Tỷ lệ (%) | {bfs}$ (mean) | \_uniform$ (mean) |
     |---|---|---|---|---|---|
     | **easy** | \_uniform \ge 0.10$ | 953 | 34.5% | 9.4 cells | 0.2946 |
@@ -256,7 +257,7 @@
 ---
 
 ### TASK-104 · Environment Profiling Report — Báo cáo Audit Chính thức
-- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ IN REVIEW (Chờ phê duyệt & merge)
 - **Branch:** `feature/env-audit-baseline`
 - **Mô tả:** Tổng hợp TASK-101/102/103 thành báo cáo audit hoàn chỉnh để commit và Người dùng phê duyệt.
 - **Chi tiết thực thi:**
