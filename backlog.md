@@ -479,7 +479,7 @@ ho_{sig}$ - Độ khó môi trường thực tế):
 ---
 
 ### TASK-303 · Sanity Check — PPO trên GridNav-v0
-- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ✅ DONE
 - **Branch:** `feature/sanity-check`
 - **Mô tả:** Chạy thử PPO 20,000 steps để xác nhận pipeline NavSim + SB3 hoạt động end-to-end.
 - **Chi tiết thực thi:**
