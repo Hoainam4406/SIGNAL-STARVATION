@@ -340,7 +340,7 @@ ho_{sig}$ - Độ khó môi trường thực tế):
 ---
 
 ### TASK-203 · Implement TaskFilter Wrapper — Curriculum theo Level & sa_uniform
-- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ✅ DONE
 - **Branch:** `feature/reward-design`
 - **Mô tả:** Xây dựng wrapper kiểm soát Trục A Signal Starvation — filter tasks theo `level` hoặc `sa_uniform`.
 - **Chi tiết thực thi:**
