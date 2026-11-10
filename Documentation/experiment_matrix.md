@@ -130,21 +130,66 @@ Mọi đánh giá định lượng được kiểm định nghiêm ngặt trên 
 
 ---
 
-### 3.1. KHỐI THỰC NGHIỆM 1: Định Lượng Độ Nhạy & Phân Rã Điểm Nghẽn Môi Trường (Sensitivity & Bottleneck Attribution)
-- **Câu hỏi khoa học:** *Khi một DRL agent thất bại trong điều hướng thực tế, yếu tố môi trường nào là nguyên nhân chính: Quy mô không gian lớn, hành trình dài, thân xe bị nghẽn ở cửa hẹp, hay do hàm thưởng quá thưa?*
-- **Phương pháp luận:** Thực hiện thiết kế phân rã nhân tố đa biến (Factorial Sensitivity Design) kết hợp phân tích phương sai **Two-way & Three-way ANOVA** để xác định phần trăm phương sai ($\eta^2$ effect size) đóng góp vào sự sụt giảm của $SR$, Generalization Gap và $SE_{50}$.
+### 3.1. KHỐI THỰC NGHIỆM 1: Định Lượng Điểm Nghẽn & Phân Tích Độ Nhạy Khách Quan (Factor Attribution & Sensitivity Analysis)
+- **Mục tiêu khoa học:** Loại bỏ sự ghép cặp chủ quan, áp dụng nguyên lý thiết kế thực nghiệm chuẩn (Design of Experiments - DoE) để trả lời câu hỏi: *Trong các đặc trưng môi trường (Cự ly, Thân xe, Topology, Mật độ thưởng), yếu tố nào là "thủ phạm chính" phá vỡ Success Rate ($M_1$), yếu tố nào nới rộng Generalization Gap ($M_5$), và yếu tố nào triệt tiêu Sample Efficiency ($M_4$)?*
+- **Phương pháp luận:** Sử dụng **Điểm Neo Quy Chuẩn (Anchor Reference Design)** kết hợp **Quét Đơn Biến (Main Effects)** và **Đo 2 Tương Tác Cốt Lõi (Critical 2-Way Interactions)**, sau đó phân rã phương sai bằng **Factorial ANOVA / Sobol Sensitivity Analysis**.
 
-#### Thiết kế Ma Trận Khối 1:
+#### 1. Thiết Lập Điểm Neo Quy Chuẩn (Anchor Baseline)
+Mọi phép đo lường độ nhạy đều được so sánh với một môi trường chuẩn đại diện cho điều kiện vận hành phổ biến:
+- **Robot chuẩn:** `TurtleBot 4` (chuẩn công nghiệp, $r=0.17\text{m}$, vi sai)
+- **Bản đồ chuẩn:** `Medium Maps` ($30 - 50\text{m}^2$)
+- **Hành trình chuẩn:** `Medium Path` ($3 - 6\text{m}$)
+- **Hàm thưởng chuẩn:** `R1 Pure Sparse` (môi trường tự nhiên không can thiệp shaping)
 
-| Cặp Biến Tương Tác | Mục Tiêu Phân Rã Nhân Quả | Chỉ Số Trọng Tâm | Quy Mô Runs ($N=5$) |
+---
+
+#### 2. Ma Trận 1A: Quét Đơn Biến Quanh Điểm Neo (One-Factor-At-A-Time Main Effects — 11 configs)
+Giữ nguyên điểm neo chuẩn, lần lượt biến thiên **từng yếu tố độc lập** để đo độ dốc suy thoái thuần khiết của từng biến lên 3 metrics chuẩn:
+
+| Biến Biến Thiên | Các Mức Khảo Sát | Điều Kiện Cố Định (Điểm Neo) | Số Configs |
 | :--- | :--- | :--- | :---: |
-| **$V_1 \times V_2$**<br>(Đói tín hiệu $\times$ Mật độ thưởng) | Đo lường mức độ nhạy cảm của gradient trước độ thưa phần thưởng ở từng cấp độ nhiệm vụ ($sa\_uniform$). | Success Rate ($M_1$), Sample Efficiency ($M_4$) | 16 configs $\times$ 2 algos $\times$ 5 seeds = **160 runs** |
-| **$V_3 \times V_5$**<br>(Quy mô bản đồ $\times$ Chiều dài đường) | Tách biệt ảnh hưởng giữa "không gian tìm kiếm bùng nổ" ($|S| \propto \text{main\_m2}$) và "chuỗi quyết định dài" ($d_{bfs}$). | Generalization Gap ($M_3$), SPL ($M_{1b}$) | 12 configs $\times$ 2 algos $\times$ 5 seeds = **120 runs** |
-| **$V_4 \times V_5$**<br>(Thân xe robot $\times$ Cửa hẹp/Hành trình) | Đo lường mức độ suy thoái khi thân xe lớn (Jackal) đối mặt với các cự ly có cửa hẹp so với thân xe nhỏ (TB4). | Tỷ lệ va chạm, $SE_{50}$, Generalization Gap | 12 configs $\times$ 2 algos $\times$ 5 seeds = **120 runs** |
+| **Cự ly ($d_{bfs}$)** | `1-3m`, `3-6m` *(neo)*, `6-10m`, `10m+` | TB4, Medium Map, Sparse R1 | **4** |
+| **Thân xe (Robot)** | `TurtleBot 4` *(neo)*, `JetAuto Pro`, `Clearpath Jackal` | Medium Path, Medium Map, Sparse R1 | **3** *(1 trùng neo)* |
+| **Bản đồ ($C_{topo}$)** | `Small (<30m²)`, `Medium` *(neo)*, `Large (≥50m²)` | TB4, Medium Path, Sparse R1 | **3** *(1 trùng neo)* |
+| **Hàm thưởng (Reward)**| `R1 Sparse` *(neo)*, `R3 Distance`, `R4 Progress`, `R6 Potential` | TB4, Medium Path, Medium Map | **4** *(1 trùng neo)* |
+| **Tổng Configs 1A** | *(Đo Main Effect thuần khiết xuất biểu đồ Tornado Plot)* | — | **11 configs** |
 
-- **Giả thuyết khoa học cần kiểm chứng ($H_1$):**
-  - Chiều dài hành trình ($d_{bfs}$) là nguyên nhân chi phối gây suy giảm $SE_{50}$ (hiệu suất mẫu), trong khi quy mô bản đồ ($C_{topo}$) là nguyên nhân chi phối nới rộng Generalization Gap ($\Delta_{gen}$).
-  - Kích thước thân xe robot ($V_4$) tạo ra một ngưỡng phi tuyến tính: Khi tỷ lệ độ rộng thân xe / độ rộng cửa vượt quá $0.75$, hiệu suất mẫu suy giảm theo hàm mũ bất kể thuật toán DRL nào được sử dụng.
+$\to$ **Đầu ra Ma trận 1A:** Biểu đồ **Tornado Sensitivity Plot** xếp hạng độ dốc ảnh hưởng của 4 biến lên $M_1$ ($SR$), $M_4$ ($SE_{50}$), và $M_5$ ($\Delta_{gen}$).
+
+---
+
+#### 3. Ma Trận 1B: Phân Tích 2 Tương Tác Cốt Lõi Có Cơ Sở Lý Thuyết (Critical 2-Way Interactions)
+Đo lường mức độ các yếu tố môi trường **khuếch đại tác hại tiêu cực của nhau**:
+
+##### Tương Tác 1: Kích Thước Thân Xe $\times$ Chiều Dài Hành Trình (3 $\times$ 4 = 12 configs)
+- *Cơ sở lý thuyết:* Robot to (Jackal) có thể không sao ở đường ngắn $1-3\text{m}$, nhưng khi hành trình dài $10\text{m}+$ đi qua nhiều cửa hẹp, xác suất tích lũy va chạm tăng vọt phi tuyến tính.
+- *Mục tiêu:* Đo lường mức độ thân xe cồng kềnh khuếch đại sự sụp đổ khi cự ly dài ra.
+
+| Robot Model \ Path Length | `1-3m` (Ngắn) | `3-6m` (Vừa) | `6-10m` (Dài) | `10m+` (Rất dài) |
+| :--- | :---: | :---: | :---: | :---: |
+| **TurtleBot 4** (Nhỏ tròn) | Config 1 | Config 2 *(neo)* | Config 3 | Config 4 |
+| **JetAuto Pro** (Toàn hướng) | Config 5 | Config 6 | Config 7 | Config 8 |
+| **Clearpath Jackal** (Lớn) | Config 9 | Config 10 | Config 11 | Config 12 |
+
+##### Tương Tác 2: Mức Đói Tín Hiệu Nhiệm Vụ $\times$ Mật Độ Thưởng (4 $\times$ 4 = 16 configs)
+- *Cơ sở lý thuyết:* Reward Shaping có cứu được agent ở mọi bài toán không? Hay nó chỉ có tác dụng ở bài toán Easy/Medium, còn khi rơi vào Starved ($sa\_uniform = 0$) thì chính Reward Shaping cũng bị vô hiệu hóa?
+- *Mục tiêu:* Xác định ranh giới chuyển pha (Phase Transition) của các dạng hàm thưởng theo độ đói tín hiệu thực tế.
+
+| Task Level \ Hàm Thưởng | **R1: Pure Sparse** | **R3: Distance** | **R4: Progress** | **R6: Potential** |
+| :--- | :---: | :---: | :---: | :---: |
+| **Easy** ($sa \ge 0.15$) | Config 13 | Config 14 | Config 15 | Config 16 |
+| **Medium** ($0.05 \le sa < 0.15$) | Config 17 | Config 18 | Config 19 | Config 20 |
+| **Hard** ($0 < sa < 0.05$) | Config 21 | Config 22 | Config 23 | Config 24 |
+| **Starved** ($sa = 0$) | Config 25 | Config 26 | Config 27 | Config 28 |
+
+---
+
+#### 4. Tổng Hợp Quy Mô Khối 1 & Phân Bổ Phương Sai (ANOVA Factor Attribution)
+- **Tổng số cấu hình độc lập Khối 1:** **32 configs** (sau khi khử trùng lặp giữa 1A và 1B).
+- **Quy mô thực nghiệm:** 32 configs $\times$ 2 thuật toán (PPO, DQN) $\times$ 5 seeds = **320 runs** (~5.0 giờ trên GPU RTX 3050).
+- **Kết quả đầu ra của Khối 1:** Mô hình phân tích phương sai đa biến (**Three-way Factorial ANOVA**) phân rã tổng phương sai suy giảm:
+  $$\text{Total Variance} = \text{SS}_{Path} + \text{SS}_{Robot} + \text{SS}_{Topology} + \text{SS}_{Reward} + \text{SS}_{Interactions} + \epsilon$$
+  Xuất ra bảng xếp hạng khoa học không thiên vị khẳng định yếu tố nào là **điểm nghẽn số 1 chi phối từng metric**, làm tiền đề chính xác để Khối 3 đưa các giải pháp can thiệp (Curriculum / HER) vào giải quyết đúng bệnh!
 
 ---
 
@@ -201,13 +246,13 @@ Toàn bộ hệ thống chạy thực nghiệm được thiết kế tự độn
 
 | Khối Thực Nghiệm | Nội Dung Khảo Sát | Cấu Hình | Thuật Toán | Số Seeds | Tổng Số Runs | Thời Gian Ước Tính (RTX 3050) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Khối 1: Sensitivity & Attribution** | Phân rã độ nhạy: $V_1 \times V_2$, $V_3 \times V_5$, $V_4 \times V_5$ | 40 | PPO, DQN | 5 | **400 runs** | ~6.0 giờ |
+| **Khối 1: Sensitivity & Attribution** | Quét đơn biến quanh Điểm Neo (1A) + 2 Tương tác cốt lõi (1B) | 32 | PPO, DQN | 5 | **320 runs** | ~5.0 giờ |
 | **Khối 2: Learning Dynamics** | Trích xuất Entropy, Value Error, Dithering | (Tích hợp trong Khối 1 & 3) | PPO, DQN | 5 | — | (Ghi log song song) |
 | **Khối 3: Stress-Testing Mitigations** | Thử thách HER, Curriculum, Potential Shaping | 15 | PPO, DQN | 5 | **150 runs** | ~2.5 giờ |
-| **TỔNG CỘNG TOÀN DỰ ÁN** | Khảo sát toàn diện hành vi & giới hạn can thiệp | **55 configs** | **2 algos** | **5** | **550 runs** | **~8.5 giờ** |
+| **TỔNG CỘNG TOÀN DỰ ÁN** | Khảo sát toàn diện độ nhạy, hành vi & giới hạn can thiệp | **47 configs** | **2 algos** | **5** | **470 runs** | **~7.5 giờ** |
 
 > [!TIP]
-> **Khả năng thực thi vượt trội:** Nhờ tốc độ mô phỏng cực cao của NavSim (~36,000 FPS) kết hợp với 5 tiến trình worker song song chạy trực tiếp trên GPU CUDA (PyTorch 2.5.1), toàn bộ 550 runs của công trình nghiên cứu quy mô này có thể hoàn tất trong vòng **~8.5 giờ chạy liên tục**.
+> **Khả năng thực thi vượt trội:** Nhờ tốc độ mô phỏng cực cao của NavSim (~36,000 FPS) kết hợp với 5 tiến trình worker song song chạy trực tiếp trên GPU CUDA (PyTorch 2.5.1), toàn bộ 470 runs của công trình nghiên cứu quy mô này có thể hoàn tất trong vòng **~7.5 giờ chạy liên tục**.
 
 ---
 
