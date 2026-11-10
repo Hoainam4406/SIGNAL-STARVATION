@@ -542,7 +542,8 @@ ho_{sig}$ - Độ khó môi trường thực tế):
 > **Mục tiêu:** Xây dựng ma trận khảo sát toàn diện, tận dụng tối đa các label có sẵn trong dataset.
 
 ### TASK-401 · Xác định Biến Thực nghiệm & Ma trận Khảo sát (Revised)
-- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** 🔵 IN PROGRESS (Đã thiết kế ma trận đầy đủ, chờ Người dùng review & chốt)
+- **Branch:** eature/experiment-runner
 - **Mô tả:** Thiết kế ma trận thực nghiệm dựa trên cấu trúc dataset thực tế.
 - **Chi tiết thực thi:**
   - **Biến Độc lập (Independent Variables):**
