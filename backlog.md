@@ -539,157 +539,143 @@ ho_{sig}$ - Độ khó môi trường thực tế):
 
 ## EPIC 4 — Thiết kế Ma trận Thực nghiệm (Experiment Matrix Design)
 
-> **Mục tiêu:** Xây dựng ma trận khảo sát toàn diện, tận dụng tối đa các label có sẵn trong dataset.
+> **Mục tiêu:** Xây dựng ma trận khảo sát độ nhạy khách quan (DoE), giải phẫu động học học tập và kiểm chứng giới hạn của các giải pháp can thiệp kinh điển.
 
-### TASK-401 · Xác định Biến Thực nghiệm & Ma trận Khảo sát (Revised)
-- **Ưu tiên:** 🟠 P1 | **Trạng thái:** 🔵 IN PROGRESS (Đã thiết kế ma trận đầy đủ, chờ Người dùng review & chốt)
-- **Branch:** eature/experiment-runner
-- **Mô tả:** Thiết kế ma trận thực nghiệm dựa trên cấu trúc dataset thực tế.
+### TASK-401 · Xác định Biến Thực nghiệm & Thiết kế Ma trận DoE Khách quan (Revised)
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** 🔵 IN PROGRESS (Đã thiết kế DoE Anchor + Main Effects + Interactions, chờ chốt)
+- **Branch:** `feature/experiment-runner`
+- **Mô tả:** Thiết kế ma trận thực nghiệm dựa trên nguyên lý Design of Experiments (DoE), tránh ghép cặp cơ học chủ quan.
 - **Chi tiết thực thi:**
   - **Biến Độc lập (Independent Variables):**
-
-    | # | Yếu tố | Levels | Mapping NavSim | Ghi chú |
-    |---|---|---|---|---|
-    | **V1** | **Task-level Signal Starvation** (`sa_uniform`) | {easy, medium, hard, starved} | `set_task_filter(level=...)` | Pre-labeled trong dataset ✅ |
-    | **V2** | **Reward Density** (Reward Shaping) | {R1 Sparse, R3 Distance, R4 Progress, R6 Potential} | RewardFactory | Trục B Signal Starvation |
-    | **V3** | **Map Topological Complexity** ($C_{topo}$) | {Small, Medium, Large} | Filter theo `main_m2` | Từ TASK-103 |
-    | **V4** | **Path Length** | {dist_bin: 1-3m, 3-6m, 6-10m, 10m+} | `set_task_filter(dist_bin=...)` | Pre-labeled ✅ |
-    | **V5** | **Robot Model** | {turtlebot4, jetauto_pro (omni), clearpath_jackal (large)} | Dataset selection | Discrete env |
-    | **V6** | **Curriculum Strategy** | {No curriculum, Level curriculum, SA-based curriculum} | TaskFilter + callback | TASK-203 |
-
-  - **Biến Phụ thuộc (Metrics — đo trên val/test split):**
-    - $M_1$: **Success Rate** — tỷ lệ episodes đạt goal
-    - $M_2$: **SPL** (Success weighted by Path Length)
-    - $M_3$: **Cumulative Reward** — total episode return
-    - $M_4$: **Sample Efficiency** — timesteps để đạt 50% success rate
-    - $M_5$: **Generalization Gap** — success(val) − success(test)
-    - $M_6$: **Correlation: success vs. sa_uniform** — kiểm tra alignment giữa dataset label và actual performance
-
-  - **Ma trận Priority (3 Phases):**
-
-    | Phase | Biến khảo sát | Điều kiện cố định | Số runs |
-    |---|---|---|---|
-    | **Phase 1 (Core)** | V1 × V2 (Task-level × Reward-level) | dataset=turtlebot4, algo={DQN,PPO}, 5 seeds | 4×4×2×5 = **160 runs** |
-    | **Phase 2** | V3 × V1 (Map complexity × Task level) | best reward from P1, 2 algos, 5 seeds | 3×4×2×5 = **120 runs** |
-    | **Phase 3** | V4 × V5 (Path length × Robot) | best config from P1, 2 algos, 5 seeds | 4×3×2×5 = **120 runs** |
-
-  - Viết `Documentation/experiment_matrix.md` với bảng đầy đủ
+    - $V_1$: **Task-level Starvation** (`sa_uniform`: easy, medium, hard, starved) — Hệ quả tích hợp của môi trường vật lý
+    - $V_2$: **Mật độ Thưởng Môi trường** (R1 Sparse, R3 Distance, R4 Progress, R6 Potential)
+    - $V_3$: **Quy mô & Topology Bản đồ** ($C_{topo}$: Small <30m², Medium 30-50m², Large ≥50m²)
+    - $V_4$: **Ràng buộc Hình học Thân xe** (TurtleBot 4, JetAuto Pro omni, Clearpath Jackal lớn)
+    - $V_5$: **Chiều dài Hành trình Tuyệt đối** (Path Length: 1-3m, 3-6m, 6-10m, 10m+)
+    - $V_6$: **Chiến lược Can thiệp Kinh điển** (Baseline M0, Curriculum M1, Goal Relabeling/HER M2, Potential PBRS M3)
+  - **3 Trụ cột Metrics Chuẩn (Dependent Metrics — đo trên val/test split):**
+    - Trụ cột 1: **Độ chính xác / Tỷ lệ thành công:** Success Rate ($M_1$), SPL ($M_{1b}$), Cumulative Return ($M_2$)
+    - Trụ cột 2: **Khả năng tổng quát hóa:** Generalization Gap $\Delta_{gen} = SR_{val} - SR_{test}$ ($M_3$), $\Delta_{SPL}$ ($M_{3b}$)
+    - Trụ cột 3: **Hiệu suất mẫu & Tốc độ huấn luyện:** Sample Efficiency $SE_{50}$ ($M_4$), Throughput FPS & Wall Time ($M_5$)
+    - Bổ trợ cơ chế: Hệ số tương quan lý thuyết - thực nghiệm $r_{sa} = \text{Corr}(SR, sa\_uniform)$ ($M_6$)
+  - **Cấu trúc Khối 1 Tinh gọn (DoE):**
+    - Điểm neo quy chuẩn (Anchor): TB4, Medium Map, Medium Path (3-6m), Sparse R1
+    - Ma trận 1A (Main Effects): Quét đơn biến qua 4 yếu tố quanh điểm neo (11 configs) $\to$ Tornado Sensitivity Plot
+    - Ma trận 1B (Critical Interactions): Đo 2 tương tác cốt lõi:
+      - Tương tác 1: Robot Model $\times$ Path Length (3 $\times$ 4 = 12 configs)
+      - Tương tác 2: Task Starvation $\times$ Reward Density (4 $\times$ 4 = 16 configs)
+    - Tổng Khối 1: 32 configs độc lập $\times$ 2 algos $\times$ 5 seeds = **320 runs**
+  - Viết hoàn chỉnh `Documentation/experiment_matrix.md`
 - **Tiêu chí DoD:**
-  - Ma trận được Người dùng review và chốt design
+  - Ma trận DoE được Người dùng review và chốt design
 - **Ước tính:** 3–5 giờ
 
 ---
 
-### TASK-402 · Xây dựng Experiment Runner — Tự động hóa Ma trận
+### TASK-402 · Xây dựng Experiment Runner Đa biến — Tự động hóa Ma trận
 - **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO
 - **Branch:** `feature/experiment-runner`
-- **Mô tả:** Code hệ thống tự động chạy toàn bộ ma trận từ config YAML.
+- **Mô tả:** Code hệ thống tự động chạy toàn bộ ma trận đa biến từ config YAML, hỗ trợ nhiều robot và GPU acceleration.
 - **Chi tiết thực thi:**
   - Tạo `src/experiment/runner.py`:
-    - Đọc YAML ma trận → generate tổ hợp (V1 × V2 × algorithm × seed)
-    - Chạy từng run, lưu CSV ngay sau mỗi run (crash-safe)
-    - Hỗ trợ `--resume` (bỏ qua runs đã có), `--dry-run` (liệt kê không execute)
-  - Tạo `configs/experiment_phase1.yaml`:
-    ```yaml
-    experiment_name: "phase1_v1_v2_signal_starvation"
-    algorithms: [dqn, ppo]
-    seeds: [42, 123, 456, 789, 1024]
-    task_levels: [easy, medium, hard, starved]
-    reward_types: [sparse, distance_dense, progress_dense, potential_shaped]
-    dataset: "grid-turtlebot4-v2"
-    robot: "turtlebot4"
-    training_timesteps: 500_000
-    eval_episodes: 100
-    eval_split: val
-    test_split: test
-    navsim_datasets: "F:/navsim/datasets"
-    ```
-  - Tạo Colab notebook `notebooks/run_phase1.ipynb`
+    - Đọc YAML ma trận $\to$ sinh danh sách runs tự động theo cấu hình DoE (Anchor, Sweeps, Interactions)
+    - Tự động chuyển đổi dataset theo robot (`grid-turtlebot4-v2`, `grid-jetauto_pro-v2`, `grid-clearpath_jackal-v2`)
+    - Chạy từng run, ghi CSV ngay sau mỗi run (crash-safe)
+    - Hỗ trợ `--resume` (bỏ qua runs đã hoàn thành), `--dry-run` (liệt kê danh sách runs mà không chạy)
+    - Tích hợp CUDA device detection (`--device cuda` trên NVIDIA RTX 3050 Laptop GPU)
+  - Tạo `configs/experiment_block1.yaml` (cấu hình 32 configs Khối 1)
 - **Tiêu chí DoD:**
-  - `--dry-run` liệt kê đúng 160 runs Phase 1
-  - Chạy 2 runs demo, xuất CSV
+  - `--dry-run` liệt kê chính xác 32 configs / 320 runs của Khối 1
+  - Chạy thử 2 demo runs trên GPU, xuất CSV đầy đủ metrics
 - **Ước tính:** 5–8 giờ
 
 ---
 
-### TASK-403 · Curriculum Learning Callback
-- **Ưu tiên:** 🟡 P2 | **Trạng thái:** ⬜ TODO
-- **Branch:** `feature/curriculum`
-- **Mô tả:** Triển khai curriculum learning sử dụng `set_task_filter` API.
+### TASK-403 · Triển khai Các Phương Pháp Can Thiệp Kinh Điển (Curriculum Learning & Goal Relabeling / HER)
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO
+- **Branch:** `feature/mitigations`
+- **Mô tả:** Triển khai các module can thiệp chuẩn DRL để chuẩn bị cho Khối 3 (Stress-Testing).
 - **Chi tiết thực thi:**
-  - Tạo `src/envs/curriculum_wrapper.py` với 3 strategies:
-    - `LevelCurriculum`: `easy` → `easy+medium` → `easy+medium+hard` → tất cả
-    - `SAThresholdCurriculum`: tăng dần ngưỡng `sa_uniform_min` giảm dần (khó hơn theo thời gian)
-    - `SuccessCurriculum`: tăng level khi success rate đạt ngưỡng (ví dụ 70%)
-  - Curriculum là biến V6 trong ma trận Phase 3
-- **Tiêu chí DoD:** 3 strategies hoạt động không lỗi
-- **Ước tính:** 3–4 giờ
-
----
-
-## EPIC 5 — Thực nghiệm Chính & Thu thập Dữ liệu
-
-> **Mục tiêu:** Chạy toàn bộ ma trận thực nghiệm, thu thập đủ N=5 seeds, trên Google Colab.
-
-### TASK-501 · Phase 1: V1 × V2 — Task Starvation × Reward Density
-- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-302, 303, 304, 401, 402
-- **Branch:** `feature/exp-phase1`
-- **Mô tả:** Thực nghiệm cốt lõi: **Task level × Reward type × 2 algorithms × 5 seeds = 160 runs**.
-- **Chi tiết thực thi:**
-  - **Dataset:** `grid-turtlebot4-v2`, robot `turtlebot4`, split train/val/test
-  - **Training:** 500,000 timesteps/run (điều chỉnh theo Colab time limit)
-  - **Eval:** 100 episodes trên val, 100 episodes trên test
-  - **Output mỗi run:**
-    - `results/phase1/<exp_id>/train_metrics.csv`
-    - `results/phase1/<exp_id>/eval_val.csv` + `eval_test.csv`
-    - `results/phase1/<exp_id>/config.yaml`
-    - `results/phase1/<exp_id>/model.zip` → Google Drive
-  - **Giả thuyết H1:** Tasks với `level=starved` (sa_uniform ≈ 0) → success rate < 10% với sparse reward; dense reward cải thiện đáng kể
-  - **Giả thuyết H2:** Correlation giữa `sa_uniform` và success rate mạnh hơn khi dùng sparse reward
+  - **Curriculum Learning Module (`src/envs/curriculum_wrapper.py`):**
+    - `SpatialCurriculum`: Tăng dần chiều dài hành trình từ $1-3\text{m} \to 10\text{m}+$ khi $SR \ge 70\%$
+    - `SACurriculum`: Hạ dần ngưỡng $sa\_uniform$ từ dễ ($sa \ge 0.15$) sang khó ($sa \to 0$)
+  - **Hindsight Experience Replay / Goal Relabeling (`src/agents/her_wrapper.py`):**
+    - Trích xuất trạng thái cuối cùng đạt được trong trajectory thất bại, tái gán làm goal phụ để tạo tín hiệu học cho Off-policy buffer (DQN)
+  - Unit tests xác nhận các wrapper hoạt động chính xác với NavSim Gym API
 - **Tiêu chí DoD:**
-  - 160/160 runs hoàn thành, không NaN
-  - Có đủ dữ liệu để vẽ 2D heatmap V1 × V2
-- **Ước tính:** 30–60 giờ CPU time (Colab)
+  - Unit tests PASS cho cả CurriculumWrapper và HER Relabeler
+- **Ước tính:** 4–6 giờ
 
 ---
 
-### TASK-502 · Phase 2: V3 × V1 — Map Complexity × Task Starvation
+## EPIC 5 — Thực nghiệm Chính & Thu thập Dữ liệu (Core Experiments & Data Acquisition)
+
+> **Mục tiêu:** Chạy toàn bộ 4 khối thực nghiệm có hệ thống ($N = 5$ seeds độc lập) trên GPU NVIDIA GeForce RTX 3050 Laptop GPU.
+
+### TASK-501 · Khối 1: Định lượng Điểm nghẽn & Phân tích Độ nhạy Môi trường (Factor Attribution & Sensitivity)
+- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-401, 402
+- **Branch:** `feature/exp-block1`
+- **Mô tả:** Thực nghiệm nền tảng: **32 configs $\times$ 2 algorithms $\times$ 5 seeds = 320 runs**.
+- **Chi tiết thực thi:**
+  - Chạy quét đơn biến quanh Điểm Neo (1A) + 2 Tương tác cốt lõi (1B: Robot $\times$ Path, sa $\times$ Reward)
+  - Đo lường 3 metrics chuẩn: Success Rate ($M_1$), Generalization Gap ($M_5$), Sample Efficiency ($M_4$)
+  - **Giả thuyết H1 (Attribution):** Chiều dài hành trình ($d_{bfs}$) là nguyên nhân chi phối suy giảm $SE_{50}$, quy mô bản đồ ($C_{topo}$) là nguyên nhân chi phối nới rộng Generalization Gap, và kích thước thân xe lớn tạo ra điểm gãy đổ phi tuyến tính khi tỷ lệ thân xe/cửa hẹp $> 0.75$.
+  - Lưu kết quả CSV liên tục tại `results/block1/`
+- **Tiêu chí DoD:**
+  - 320/320 runs hoàn thành không crash/NaN
+  - Đủ dữ liệu xây dựng mô hình Three-way ANOVA và biểu đồ Tornado Plot
+- **Ước tính:** ~5.0 giờ chạy GPU RTX 3050
+
+---
+
+### TASK-502 · Khối 2: Giải phẫu Động học Học tập & Biến dạng Hành vi (Learning Dynamics & Behavioral Breakdown)
 - **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-501
-- **Branch:** `feature/exp-phase2`
-- **Mô tả:** Khảo sát ảnh hưởng topological complexity lên signal starvation.
+- **Branch:** `feature/exp-block2`
+- **Mô tả:** Trích xuất log nội tại từ các runs để giải phẫu sự suy thoái bên trong "bộ não" của agent.
 - **Chi tiết thực thi:**
-  - Filter maps theo `main_m2` (từ TASK-103): Small / Medium / Large
-  - Thực nghiệm: 3 map groups × 4 task levels × best reward × 2 algos × 5 seeds = **120 runs**
-  - **Giả thuyết H3:** Map lớn ($C_{topo}$ cao) × task starved → tỷ lệ thất bại tăng phi tuyến
-- **Tiêu chí DoD:** 120/120 runs hoàn thành
-- **Ước tính:** 20–40 giờ
+  - Ghi log mỗi 1,000 steps về:
+    - **Policy Entropy Decay Rate $\Delta \mathcal{H}_\pi / \Delta t$:** Đo tốc độ đông cứng thăm dò sớm
+    - **Value Estimation Error $\mathbb{E}[|Q(s, a) - V^*(s)|]$:** Đo độ ảo tưởng hoặc phẳng lì của gradient
+    - **Hành vi lỗi:** Tần suất Dithering (dao động qua lại tại chỗ) và Corner Trapping (mắc kẹt tại mép cửa hẹp)
+  - **Giả thuyết H2 (Dynamics):** Thân xe lớn trong hành lang hẹp gây ra sụp đổ Entropy sớm trước khi chạm đích, trong khi Dense Reward R3 gây ra sai số ước lượng Q-value tích lũy theo chiều dài hành trình.
+- **Tiêu chí DoD:**
+  - Xuất bảng phân loại lỗi (Failure Mode Typology) và biểu đồ đường cong Entropy Decay cho 3 dòng robot
+- **Ước tính:** Tích hợp song song trong quá trình chạy Khối 1 & 3
 
 ---
 
-### TASK-503 · Phase 3: V4 × V5 — Path Length × Robot Model
-- **Ưu tiên:** 🟡 P2 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-502
-- **Branch:** `feature/exp-phase3`
-- **Mô tả:** Khảo sát ảnh hưởng độ dài path và kinematic diversity.
+### TASK-503 · Khối 3: Thử thách Giới hạn Can thiệp của các Giải pháp Kinh điển (Stress-Testing Canonical Mitigations)
+- **Ưu tiên:** 🔴 P0 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-403, 501, 502
+- **Branch:** `feature/exp-block3`
+- **Mô tả:** Stress-test các vũ khí kinh điển (CL, HER, PBRS) trước các điểm nghẽn môi trường đã xác định: **15 configs $\times$ 2 algos $\times$ 5 seeds = 150 runs**.
 - **Chi tiết thực thi:**
-  - Filter theo `dist_bin`: `'1-3'`, `'3-6'`, `'6-10'`, `'10-15'`
-  - Robots: turtlebot4, jetauto_pro (omni), clearpath_jackal (large)
-  - 4 dist_bins × 3 robots × best config × 2 algos × 5 seeds = **120 runs**
-- **Tiêu chí DoD:** 120/120 runs hoàn thành
-- **Ước tính:** 20–40 giờ
+  - Thử thách đối đầu:
+    $$\text{Baseline (M0)} \quad \text{vs.} \quad \text{+ PBRS (M3)} \quad \text{vs.} \quad \text{+ Curriculum (M1)} \quad \text{vs.} \quad \text{+ HER (M2)} \quad \text{vs.} \quad \text{+ (CL + HER)}$$
+    trên 3 điểm nghẽn nghiêm trọng nhất:
+    - B1: Đói tín hiệu do cự ly rất dài ($10\text{m}+$)
+    - B2: Nút thắt thân xe lớn (Clearpath Jackal tại cửa hẹp)
+    - B3: Bẫy topology ngõ cụt phức tạp
+  - **Giả thuyết H3 (Mitigation Limits):** HER giải cứu thành công cự ly dài (B1) nhưng hoàn toàn bất lực trước nút thắt thân xe (B2); Curriculum giúp agent vượt qua nút thắt thân xe (B2) nhưng tăng thời gian huấn luyện tổng thể; PBRS không thu hẹp được Generalization Gap trên bản đồ mới.
+- **Tiêu chí DoD:**
+  - 150/150 runs hoàn thành
+  - Xác định chính xác ranh giới mà từng giải pháp thất bại
+- **Ước tính:** ~2.5 giờ chạy GPU RTX 3050
 
 ---
 
-### TASK-504 · Phase 4: Curriculum Learning
-- **Ưu tiên:** 🟡 P2 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-502
-- **Branch:** `feature/exp-phase4`
-- **Mô tả:** Khảo sát curriculum learning để vượt qua signal starvation.
+### TASK-504 · Khối 4: Tổng hợp Ranh giới Khả thi & Nguyên lý Thiết kế cho Physical AI (Synthesis & Design Principles)
+- **Ưu tiên:** 🟠 P1 | **Trạng thái:** ⬜ TODO | ❌ **BLOCKED** bởi TASK-503
+- **Branch:** `feature/exp-block4`
+- **Mô tả:** Đúc kết bản đồ ranh giới khoa học (Feasibility Boundary Map) từ kết quả của Khối 1, 2, 3.
 - **Chi tiết thực thi:**
-  - 3 curriculum strategies × starved tasks × 2 algos × 5 seeds = **30 runs** (so sánh vs. no-curriculum từ Phase 1)
-  - **Giả thuyết H4:** Level curriculum giúp agent học được trên `starved` tasks
-- **Ước tính:** 10–20 giờ
+  - Phân định rõ 2 vùng không gian môi trường:
+    1. **Vùng giải quyết được bằng thuật toán (Algorithm-Solvable Zone):** Cấu hình môi trường mà DRL kết hợp CL hoặc HER giải quyết triệt để ($SR > 80\%, \Delta_{gen} < 10\%$).
+    2. **Vùng giới hạn lý thuyết / Sụp đổ vật lý (Environment-Redesign Zone):** Ngưỡng môi trường mà DRL thuần túy bắt buộc thất bại (tỷ lệ thân xe/cửa hẹp $> 0.85$), đòi hỏi phải tái thiết kế độ rộng hành lang hoặc chuyển giao sang kiến trúc lai (Hybrid Classical Planning + DRL).
+- **Tiêu chí DoD:**
+  - Bản đồ Feasibility Boundary Map hoàn chỉnh được Người dùng phê duyệt
+- **Ước tính:** 3–5 giờ
 
 ---
-
 ## EPIC 6 — Phân tích Thống kê & Trực quan hóa
 
 > **Mục tiêu:** Xử lý dữ liệu, kiểm định thống kê nghiêm ngặt, tạo biểu đồ publication-quality.
@@ -843,20 +829,25 @@ flowchart TD
     T301 --> T302[TASK-302: YAML Hyperparams x3]
     T302 --> T303[TASK-303: Sanity Check PPO/DQN/A2C]
     T303 --> T304[TASK-304: Reproduction Verify]
-    T304 --> T401[TASK-401: Experiment Matrix]
+    T304 --> T401[TASK-401: Experiment Matrix DoE]
     T203 --> T401
     T204 --> T401
-    T401 --> T402[TASK-402: Exp Runner]
-    T402 --> T501[TASK-501: Phase 1]
-    T501 --> T502[TASK-502: Phase 2]
-    T502 --> T503[TASK-503: Phase 3]
-    T502 --> T504[TASK-504: Phase 4 Curriculum]
-    T501 --> T601[TASK-601: Aggregation]
-    T601 --> T602[TASK-602: Stat Tests]
-    T602 --> T603[TASK-603: Visualization]
-    T604[TASK-604: SSI Index] --> T603
-    T603 --> T701[TASK-701: Paper Draft]
-    T701 --> T702[TASK-702: Guidelines]
+    T401 --> T402[TASK-402: Multi-Var Exp Runner]
+    T401 --> T403[TASK-403: Mitigation Wrappers CL & HER]
+    T402 --> T501[TASK-501: Khối 1 - Sensitivity & Attribution]
+    T501 --> T502[TASK-502: Khối 2 - Learning Dynamics & Distortion]
+    T403 --> T503[TASK-503: Khối 3 - Stress-Testing Mitigations]
+    T501 --> T503
+    T502 --> T503
+    T503 --> T504[TASK-504: Khối 4 - Feasibility Boundary Map]
+    T501 --> T601[TASK-601: Aggregation & Bootstrap CI]
+    T503 --> T601
+    T601 --> T602[TASK-602: ANOVA & Tornado Ranking]
+    T602 --> T603[TASK-603: Publication Figures]
+    T604[TASK-604: SSI Index Validation] --> T603
+    T504 --> T701[TASK-701: Research Paper 4-Act Draft]
+    T603 --> T701
+    T701 --> T702[TASK-702: Physical AI Design Guidelines]
 ```
 
 ---
