@@ -1,283 +1,234 @@
-# 📐 MA TRẬN THỰC NGHIỆM ĐỊNH LƯỢNG: ẢNH HƯỞNG CỦA CÁC ĐẶC TRƯNG MÔI TRƯỜNG ĐẾN HIỆU SUẤT CỐT LÕI CỦA DRL AGENTS TRONG PHYSICAL AI
-## Quantitative Empirical Matrix: Impact of Environmental Properties on Core DRL Agent Performance in Physical AI Navigation
+# 📐 MA TRẬN THỰC NGHIỆM ĐỊNH LƯỢNG: ẢNH HƯỞNG CỦA CÁC ĐẶC TRƯNG MÔI TRƯỜNG ĐẾN HÀNH VI, ĐỘNG HỌC HỌC TẬP VÀ GIỚI HẠN CAN THIỆP CỦA DRL TRONG PHYSICAL AI
+## Quantitative Empirical Matrix: Impact of Environmental Properties on Learning Dynamics, Policy Behaviors, and Mitigation Limits of DRL in Physical AI
 
 - **Tác giả:** Antigravity Research Team
-- **Đề tài chính:** Khảo sát và định lượng ảnh hưởng của các đặc trưng môi trường (*environmental properties*) đến hiệu suất cốt lõi của các DRL agents (được sử dụng làm bộ não cho hệ thống Physical AI).
-- **Cơ chế phân tích khoa học:** Tiếp cận qua lăng kính hiện tượng **Signal Starvation (Thiếu đói tín hiệu do cấu trúc môi trường)**.
-- **Môi trường mô phỏng:** NavSim `GridNav-v0` (Gymnasium-native)
+- **Đề tài chính:** Khảo sát và định lượng ảnh hưởng của các đặc trưng môi trường (*environmental properties*) đến hành vi, động học học tập và hiệu suất cốt lõi của các DRL agents (được sử dụng làm bộ não cho hệ thống Physical AI).
+- **Lăng kính cơ chế:** Hiện tượng **Signal Starvation (Thiếu đói tín hiệu do cấu trúc môi trường)** và sự bóp nghẹt không gian trạng thái khả dụng.
+- **Môi trường thực nghiệm:** NavSim `GridNav-v0` (Gymnasium-native)
 - **Tài liệu nền tảng:** [`ENV_AUDIT_REPORT.md`](file:///C:/SIGNAL-STARVATION/audit_reports/ENV_AUDIT_REPORT.md), [`reward_design_taxonomy_2d_navigation.md`](file:///C:/SIGNAL-STARVATION/reward_design_taxonomy_2d_navigation.md), [`reproduction_report.md`](file:///C:/SIGNAL-STARVATION/Documentation/reproduction_report.md)
-- **Phiên bản:** v2.0 — Căn chỉnh chuẩn hóa theo mục tiêu cốt lõi của đề tài
+- **Phiên bản:** v3.0 — Định hình chuẩn mực học thuật, giải phẫu động học DRL và giới hạn các giải pháp can thiệp
 
 ---
 
-## 1. MỤC TIÊU CỐT LÕI VÀ TẦM NHÌN NGHIÊN CỨU
+## 1. TỔNG QUAN VÀ QUAN ĐIỂM CỐT LÕI CỦA NGHIÊN CỨU (CORE ACADEMIC THESIS)
 
-### 1.1. Mục Tiêu Chính của Đề Tài
-Mục tiêu cốt lõi của nghiên cứu là **khảo sát và định lượng một cách có hệ thống ảnh hưởng của các đặc trưng môi trường (*environmental properties*) đến hiệu suất của các mô hình Học tăng cường sâu (DRL agents)** đóng vai trò là cơ cấu ra quyết định và điều hướng (bộ não) cho các hệ thống Physical AI (Mobile Robots).
+### 1.1. Vượt Qua "Bẫy Hiện Tượng Hiển Nhiên" (Transcending the Trivial Geometric Trap)
+Trong bài toán điều hướng tự chủ bằng Học tăng cường sâu (DRL Navigation for Physical AI), nếu chỉ quan sát:
+> *"Bản đồ rộng hơn thì robot khó tìm đường hơn, robot thân xe to hơn thì khó lọt qua khe hẹp hơn, hoặc đường dài hơn thì xác suất va chạm tăng lên."*
 
-Trong các hệ thống Physical AI thực tế, môi trường vật lý không bao giờ đồng nhất mà luôn biến thiên đa dạng về:
-1. **Quy mô và hình học không gian** (diện tích phòng, hành lang, ngõ cụt, vật cản phân mảnh).
-2. **Quy mô khoảng cách nhiệm vụ** (đường đi ngắn vài mét đến dài xuyên phòng).
-3. **Đặc tính phản hồi tín hiệu từ bài toán** (phần thưởng tự nhiên cực thưa hay có tín hiệu dẫn đường).
-4. **Ràng buộc vật lý - động học của thân xe** (bán kính va chạm, cơ chế chuyển động vi sai hay toàn hướng).
+$\to$ Đây thuần túy là những **sự thật hình học hiển nhiên (Trivial geometric facts)**, ai cũng có thể suy luận trực giác và **hoàn toàn không mang giá trị nghiên cứu khoa học**.
 
-### 1.2. Lăng Kính Khoa Học: Hiện Tượng Signal Starvation Do Cấu Trúc Môi Trường
-Để giải thích về mặt cơ chế tại sao và khi nào các đặc trưng môi trường khiến DRL agents suy giảm hiệu năng hoặc tê liệt hoàn toàn, nghiên cứu sử dụng hiện tượng **Signal Starvation (Thiếu đói tín hiệu do cấu trúc môi trường)** làm luận điểm lý giải trung tâm:
-- Khi một môi trường có cấu trúc topo phức tạp hoặc hành trình quá dài dưới hàm thưởng thưa, xác suất tác tử tình cờ chạm đích bằng chính sách khám phá ngẫu nhiên tiến dần về 0 ($\rho_{sig} \to 1.0$).
-- Sự thiếu đói tín hiệu này là **hệ quả trực tiếp sinh ra từ sự tương tác giữa cấu trúc hình học của môi trường với bài toán**, làm triệt tiêu gradient cập nhật của mạng nơ-ron và gây sụp đổ học tập (*Learning Collapse*).
+**Giá trị học thuật thực thụ của nghiên cứu này nằm ở việc giải quyết 3 câu hỏi bản chất:**
+1. **Định Lượng Điểm Nghẽn Chi Phối (Bottleneck Hierarchy & Attribution):**
+   Trong một hệ thống Physical AI chịu tác động đồng thời của nhiều yếu tố môi trường (Quy mô bản đồ, Chiều dài chuỗi quyết định, Kích thước hình học thân xe đối với cửa hẹp, và Mật độ tín hiệu thưởng tự nhiên): **Yếu tố nào đóng vai trò là "điểm nghẽn chi phối" (Dominant Bottleneck) bẻ gãy quá trình học của DRL?** Yếu tố nào gây suy thoái hiệu suất mẫu ($Sample\ Efficiency$), yếu tố nào phá vỡ khả năng tổng quát hóa ($Generalization\ Gap$)?
+2. **Giải Phẫu Sự Biến Dạng Hành Vi & Động Học Học Tập (Learning Dynamics & Behavioral Distortion):**
+   Môi trường tác động lên "bên trong bộ não" của agent như thế nào trong suốt quá trình tối ưu hóa?
+   - Gradient bị triệt tiêu do không bao giờ chạm đích (Vanishing Gradient / Signal Starvation)?
+   - Entropy của chính sách bị sụp đổ quá sớm khiến agent tê liệt khả năng khám phá (Premature Entropy Collapse)?
+   - Hay hàm giá trị $Q(s, a)$ bị chệch hướng nghiêm trọng (Value Estimation Divergence), dẫn đến việc agent chọn đứng yên (*Premature Freezing*) hoặc dao động qua lại vô nghĩa (*Dithering*) để tránh phạt va chạm?
+3. **Thử Thách & Xác Định Giới Hạn Của Các Phương Pháp Can Thiệp Kinh Điển (Stress-Testing Canonical Mitigations):**
+   Cộng đồng DRL đã phát triển các phương pháp chuẩn mực để giải quyết bài toán môi trường phức tạp và thiếu tín hiệu:
+   - **Curriculum Learning (CL):** Tăng dần độ khó của môi trường từ dễ đến khó.
+   - **Hindsight Experience Replay (HER / Goal Relabeling):** Tái gán mục tiêu từ trải nghiệm thất bại để tạo tín hiệu thưởng nhân tạo.
+   - **Potential-Based Reward Shaping (PBRS):** Bơm gradient thế năng bảo toàn chính sách tối ưu.
+   $\to$ **Trọng tâm học thuật:** *Các phương pháp này cải thiện được yếu tố nào, cải thiện đến đâu, và đâu là ranh giới môi trường mà tại đó các phương pháp kinh điển hoàn toàn sụp đổ? Khi nào DRL có thể tự vượt qua bằng thuật toán, và khi nào bắt buộc phải tái cấu trúc môi trường hoặc sử dụng kiến trúc lai (Hybrid Planning)?*
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                               MÔ HÌNH QUAN HỆ NHÂN QUẢ                                 │
-│                                                                                        │
-│   ĐẶC TRƯNG MÔI TRƯỜNG (Environmental Properties)                                      │
-│   ┌────────────────────────────────────────────────────────────────────────────┐       │
-│   │ • Topology không gian & Diện tích di chuyển (C_topo, main_m2)              │       │
-│   │ • Chiều dài hành trình Start-Goal (d_bfs)                                  │       │
-│   │ • Ràng buộc hình học thân xe & Động học Robot (Kinematics & Footprint)     │       │
-│   │ • Mật độ tín hiệu thưởng tự nhiên của bài toán (Reward Sparsity)           │       │
-│   └─────────────────────────────────────┬──────────────────────────────────────┘       │
-│                                         │ (Tác động sinh ra cơ chế)                    │
-│                                         ▼                                              │
-│               [CƠ CHẾ LÝ GIẢI KHOA HỌC: SIGNAL STARVATION (sa_uniform)]                │
-│                                         │                                              │
-│                                         ▼ (Quyết định)                                 │
-│   3 TRỤ CỘT HIỆU SUẤT CỦA DRL AGENTS (Core Performance Metrics)                        │
-│   ┌────────────────────────────────────────────────────────────────────────────┐       │
-│   │ 1. Độ chính xác & Tỷ lệ thành công (Success Rate & Cumulative Reward)      │       │
-│   │ 2. Khả năng Tổng quát hóa (Generalization Gap trên môi trường chưa thấy)   │       │
-│   │ 3. Hiệu suất mẫu & Tốc độ huấn luyện (Sample Efficiency & Training Time)   │       │
-│   └────────────────────────────────────────────────────────────────────────────┘       │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              KHUNG LÝ LUẬN KHOA HỌC CỐT LÕI                                     │
+│                                                                                                 │
+│   CÁC ĐẶC TRƯNG MÔI TRƯỜNG                                                                      │
+│   ┌────────────────────────────────────────────────────────────────────────────┐                │
+│   │ • Quy mô diện tích & Topology bản đồ (C_topo)                              │                │
+│   │ • Chiều dài chuỗi quyết định / Cự ly Start-Goal (d_bfs)                    │                │
+│   │ • Ràng buộc hình học thân xe / Tỷ lệ thắt nghẽn cửa hẹp (Footprint Ratio)  │                │
+│   │ • Mật độ phản hồi thưởng tự nhiên (Sparsity)                               │                │
+│   └─────────────────────────────────────┬──────────────────────────────────────┘                │
+│                                         │ (Tác động lên)                                        │
+│                                         ▼                                                       │
+│   ĐỘNG HỌC HỌC TẬP & HÀNH VI CỦA DRL AGENTS                                                     │
+│   ┌────────────────────────────────────────────────────────────────────────────┐                │
+│   │ • Policy Entropy Dynamics: Tốc độ đông cứng thăm dò                        │                │
+│   │ • Value Estimation Error: Sự méo mó của hàm giá trị Q(s,a)                 │                │
+│   │ • Failure Modes: Dithering loops, Freezing, Corner Trapping                │                │
+│   └─────────────────────────────────────┬──────────────────────────────────────┘                │
+│                                         │ (Được can thiệp bởi)                                  │
+│                                         ▼                                                       │
+│   CÁC GIẢI PHÁP CAN THIỆP KINH ĐIỂN & ĐỊNH LƯỢNG GIỚI HẠN SỤP ĐỔ                                │
+│   ┌────────────────────────────────────────────────────────────────────────────┐                │
+│   │ [Curriculum Learning] ──► [Hindsight Experience Replay] ──► [Potential PBRS]│                │
+│   │                ĐÂU LÀ RANH GIỚI MÔI TRƯỜNG MÀ CÁC GIẢI PHÁP THẤT BẠI?      │                │
+│   └────────────────────────────────────────────────────────────────────────────┘                │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
-
-### 1.3. Tiêu Chí Hoàn Thành Mục Tiêu (Definition of Done)
-1. **Báo cáo Thực nghiệm:** Hoàn thiện bản báo cáo khoa học chứng minh tính hợp lý của phương pháp luận, với dữ liệu từ số lượng bài testing đủ lớn (tối thiểu **$N = 5$ random seeds độc lập** trên mỗi biến cấu hình).
-2. **Kết quả Định lượng Chi tiết:** Phân tích rõ ràng mối quan hệ nhân quả và mức độ ảnh hưởng của từng yếu tố môi trường đối với **3 nhóm metrics chuẩn**:
-   - *Độ chính xác / Tỷ lệ thành công (Success Rate & Cumulative Reward).*
-   - *Khả năng tổng quát hóa ($Generalization Gap$ trên môi trường chưa thấy).*
-   - *Thời gian huấn luyện / Hiệu suất mẫu ($Sample Efficiency / Training Time$).*
-3. **Lý giải Khoa học & Giả thuyết:** Cung cấp phân tích sâu sắc gắn liền với hiện tượng *Signal Starvation* (Thiếu đói tín hiệu do cấu trúc môi trường), tổng kết các giả thuyết đã được kiểm chứng và đề xuất các giả thuyết mới cần mở rộng kèm điều kiện thực nghiệm chi tiết.
 
 ---
 
-## 2. HỆ THỐNG BIẾN THỰC NGHIỆM ĐỊNH LƯỢNG
+## 2. HỆ THỐNG BIẾN THỰC NGHIỆM VÀ 3 TRỤ CỘT METRICS CHUẨN
 
-### 2.1. Nhóm Biến Độc Lập: Các Đặc Trưng Môi Trường ($V_1 \dots V_5$) & Can Thiệp Thuật Toán ($V_6$)
+### 2.1. Nhóm Biến Độc Lập: 4 Nhóm Đặc Trưng Môi Trường & 3 Phương Pháp Can Thiệp
 
-Các biến độc lập được ánh xạ trực tiếp từ cấu trúc dataset thực tế `grid-*-v2` và hệ thống wrappers môi trường của dự án:
-
-| Ký hiệu | Đặc Trưng Môi Trường / Yếu Tố | Mức Khảo Sát (Levels) | Hiện Thực Hóa Kỹ Thuật | Cơ Sở Dữ Liệu Thực Tế |
+| Ký hiệu | Tên Yếu Tố | Mức Khảo Sát (Levels) | Ánh Xạ Kỹ Thuật Trong NavSim | Ý Nghĩa Học Thuật |
 | :---: | :--- | :--- | :--- | :--- |
-| **$V_1$** | **Mức độ Đói tín hiệu của Tác vụ** (*Task Starvation Characteristic*) | - `easy` ($sa \ge 0.15$)<br>- `medium` ($0.05 \le sa < 0.15$)<br>- `hard` ($0 < sa < 0.05$)<br>- `starved` ($sa = 0$) | `set_task_filter(level=...)`<br>hoặc `SAFilter(sa_min, sa_max)` | Chỉ số định lượng `sa_uniform` pre-computed từ MDP trong dataset NavSim (34.5% easy, 34.0% medium, 9.6% hard, 21.9% starved). |
-| **$V_2$** | **Mật độ Phản hồi Tín hiệu Thưởng** (*Environmental Reward Density*) | - **R1:** Pure Sparse (Mặc định)<br>- **R3:** Distance Dense<br>- **R4:** Progress Dense<br>- **R6:** Potential-based Shaped | `RewardFactory.make(env, "r1"..."r6")`<br>từ [`src/rewards/`](file:///C:/SIGNAL-STARVATION/src/rewards/) | Biến thiên từ môi trường thưởng cực thưa tự nhiên (R1) đến dày đặc (R3, R4) và bảo toàn chính sách tối ưu (R6 - Ng et al., 1999). |
-| **$V_3$** | **Quy mô & Độ phức tạp Topology Bản đồ** (*Topological Complexity & Area*) | - **Small:** $\text{main\_m2} < 30\ \text{m}^2$<br>- **Medium:** $30 \le \text{main\_m2} < 50\ \text{m}^2$<br>- **Large:** $\text{main\_m2} \ge 50\ \text{m}^2$ | Bộ lọc danh sách map theo diện tích di chuyển `main_m2` | Kết quả profiler trên 138 maps thực tế: Diện tích dao động $11.02\ \text{m}^2 \to 145.41\ \text{m}^2$, mật độ chướng ngại vật $1 - \text{main\_frac} \approx 9.1\%$. |
-| **$V_4$** | **Chiều dài Hành trình Start-Goal** (*Spatial Path Length Horizon*) | - `1-3m` (ngắn)<br>- `3-6m` (vừa)<br>- `6-10m` (dài)<br>- `10m+` (rất dài) | `set_task_filter(dist_bin=...)` | Thuộc tính phân nhóm cự ly BFS `dist_bin` pre-labeled trong metadata tasks ($d_{bfs} \in [8, 67]$ cells). |
-| **$V_5$** | **Ràng buộc Hình học Thân xe & Động học** (*Kinematic Footprint Constraint*) | - **TurtleBot 4:** Differential, hình tròn nhỏ ($r=0.171\text{m}$)<br>- **JetAuto Pro:** Holonomic (omni-directional), cơ động cao<br>- **Clearpath Jackal:** Skid-steer, hình chữ nhật lớn ($0.51 \times 0.43\text{m}$) | Chọn dataset môi trường:<br>`grid-turtlebot4-v2`<br>`grid-jetauto_pro-v2`<br>`grid-clearpath_jackal-v2` | Khảo sát ảnh hưởng của va chạm cạnh hẹp và ràng buộc quay thân xe đối với khả năng di chuyển trong không gian vật lý. |
-| **$V_6$** | **Chiến lược Can thiệp Tiến trình Môi trường** (*Environmental Curriculum Strategy*) | - **C0:** Không có curriculum (Uniform random)<br>- **C1:** Level Curriculum (`easy` $\to$ `medium` $\to$ `hard` $\to$ `starved`)<br>- **C2:** Adaptive SA Curriculum ($sa_{min}$ trượt giảm dần) | Custom Training Callback tích hợp `TaskFilterWrapper` | Đánh giá năng lực của chiến lược thay đổi phân phối môi trường huấn luyện theo độ khó tăng dần để vượt qua điểm nghẽn học tập. |
+| **$V_1$** | **Chuỗi Quyết Định & Tỷ Lệ Đói Tín Hiệu ($d_{bfs}, sa$)** | `easy` ($sa \ge 0.15$), `medium` ($0.05 \le sa < 0.15$), `hard` ($0 < sa < 0.05$), `starved` ($sa = 0$) | `set_task_filter(level=...)` | Đo lường mức độ suy biến tín hiệu do chiều dài chuỗi hành động ngẫu nhiên gây ra ($sa\_uniform$). |
+| **$V_2$** | **Mật Độ Phản Hồi Thưởng Môi Trường (Reward Density)** | **R1:** Pure Sparse, **R3:** Distance Dense, **R4:** Progress Dense, **R6:** Potential Shaped | [`RewardFactory`](file:///C:/SIGNAL-STARVATION/src/rewards/reward_factory.py) | Khảo sát từ môi trường thưởng cực thưa tự nhiên đến môi trường có tín hiệu dẫn đường liên tục. |
+| **$V_3$** | **Quy Mô Diện Tích & Cấu Trúc Topology ($C_{topo}$)** | **Small** ($< 30\text{m}^2$), **Medium** ($30-50\text{m}^2$), **Large** ($\ge 50\text{m}^2$) | Lọc bản đồ theo diện tích di chuyển `main_m2` từ profiler | Khảo sát sự bùng nổ không gian trạng thái $|S|$ và sự ngăn cách của các vách ngăn phòng. |
+| **$V_4$** | **Ràng Buộc Hình Học Thân Xe & Động Học (Footprint Constraint)** | **TurtleBot 4** (nhỏ tròn $r=0.17\text{m}$), **JetAuto Pro** (vừa, toàn hướng omni), **Clearpath Jackal** (lớn chữ nhật $0.51 \times 0.43\text{m}$) | Datasets: `grid-turtlebot4-v2`, `grid-jetauto_pro-v2`, `grid-clearpath_jackal-v2` | Khảo sát tỷ lệ co rút không gian tự do ($\mathcal{S}_{free} = \mathcal{M} \ominus \text{Footprint}$) và các nút thắt hình học tại cửa hẹp. |
+| **$V_5$** | **Chiều Dài Hành Trình Tuyệt Đối (Path Length)** | `1-3m` (ngắn), `3-6m` (vừa), `6-10m` (dài), `10m+` (rất dài) | `set_task_filter(dist_bin=...)` | Khảo sát sự tích lũy sai số quyết định theo cự ly vật lý. |
+| **$V_6$** | **Chiến Lược Can Thiệp Kinh Điển (Mitigation Strategies)** | **M0:** Không can thiệp (Baseline), **M1:** Curriculum Learning (CL), **M2:** Goal Relabeling (HER), **M3:** Potential Shaping (PBRS) | Custom Training Callbacks & Replay Wrappers | Thử thách khả năng "giải cứu" của từng giải pháp kinh điển trước các điểm nghẽn môi trường. |
 
 ---
 
-### 2.2. Nhóm Biến Phụ Thuộc: 3 Trụ Cột Hiệu Suất Cốt Lõi của DRL Agents
+### 2.2. Nhóm Biến Phụ Thuộc: 3 Trụ Cột Hiệu Suất Cốt Lõi & Metrics Động Học Nội Tại
 
-Mọi đánh giá định lượng được thực hiện trên tập kiểm thử độc lập (**Validation Split: 20 maps, 400 tasks** và **Test Split: 20 maps, 400 tasks**) thông qua giao thức chuẩn `navsim.evaluate()`:
+Mọi đánh giá định lượng được kiểm định nghiêm ngặt trên **Validation Split (20 maps, 400 tasks)** và **Test Split (20 maps, 400 tasks hoàn toàn mới)**:
 
 #### Trụ Cột 1: Độ Chính Xác & Tỷ Lệ Hoàn Thành Nhiệm Vụ (Accuracy & Task Completion)
-- **$M_1$ — Success Rate ($SR$):**
-  $$SR = \frac{1}{N_{eval}} \sum_{i=1}^{N_{eval}} \mathbb{I}(\text{reached\_goal}_i) \in [0.0, 1.0]$$
-  *Ý nghĩa:* Tỷ lệ nhiệm vụ robot điều hướng thành công đến mục tiêu trong ngân sách bước tối đa cho phép.
-- **$M_2$ — Cumulative Reward ($G$):**
-  $$G = \frac{1}{N_{eval}} \sum_{i=1}^{N_{eval}} \sum_{t=0}^T \gamma^t r_{i, t}$$
-  *Ý nghĩa:* Tổng điểm thưởng trung bình tích lũy được trong mỗi episode, phản ánh chất lượng tối ưu hóa mục tiêu.
-- **$M_{1b}$ — Success weighted by Path Length ($SPL$):**
-  $$SPL = \frac{1}{N_{eval}} \sum_{i=1}^{N_{eval}} S_i \frac{l_i}{\max(p_i, l_i)} \in [0.0, 1.0]$$
-  *Ý nghĩa:* Thước đo chuẩn hóa quốc tế (Anderson et al., 2018) kết hợp giữa việc đến đích ($S_i=1$) và độ dài đường đi ngắn nhất ($l_i / p_i$).
+- **$M_1$ — Success Rate ($SR$):** Tỷ lệ nhiệm vụ robot điều hướng thành công chạm đích.
+- **$M_2$ — Cumulative Return ($G$):** Tổng phần thưởng tích lũy trung bình mỗi episode.
+- **$M_{1b}$ — Success weighted by Path Length ($SPL$):** Thước đo chuẩn quốc tế về độ tối ưu đường đi ($SPL \le SR$).
 
 #### Trụ Cột 2: Khả Năng Tổng Quát Hóa (Generalization Capability)
-- **$M_3$ — Generalization Gap ($\Delta_{gen}$):**
-  $$\Delta_{gen} = SR_{val} - SR_{test}$$
-  *Ý nghĩa:* Độ sụt giảm hiệu năng khi agent đối mặt với 20 bản đồ kiểm thử hoàn toàn mới (Test split) so với 20 bản đồ đã gặp trong quá trình validation. Đại diện cho mức độ nhạy cảm của agent với sự thay đổi bố cục môi trường (tránh hiện tượng overfitting cấu trúc hình học quen thuộc).
-- **$M_{3b}$ — Generalization SPL Gap ($\Delta_{SPL}$):**
-  $$\Delta_{SPL} = SPL_{val} - SPL_{test}$$
-  *Ý nghĩa:* Đánh giá sự suy giảm về độ mượt mà và tối ưu của đường đi trên địa hình chưa từng biết.
+- **$M_3$ — Generalization Gap ($\Delta_{gen} = SR_{val} - SR_{test}$):** Độ suy giảm hiệu năng khi đối mặt với địa hình kiểm thử chưa từng thấy trong quá trình huấn luyện (đo lường mức độ overfitting cấu trúc hình học quen thuộc).
+- **$M_{3b}$ — Generalization SPL Gap ($\Delta_{SPL} = SPL_{val} - SPL_{test}$):** Đo lường sự méo mó của đường đi trên môi trường mới.
 
 #### Trụ Cột 3: Hiệu Suất Mẫu & Tốc Độ Huấn Luyện (Sample Efficiency & Training Time)
-- **$M_4$ — Sample Efficiency ($SE_{50}$):**
-  $$SE_{50} = \min \{ t \mid SR(t) \ge 0.50 \}$$
-  *Ý nghĩa:* Số lượng bước tương tác môi trường (timesteps) tối thiểu để mô hình đạt mức thành công $50\%$. Nếu sau toàn bộ ngân sách vẫn không đạt $50\%$, $SE_{50} = \infty$ (đại diện cho trạng thái học thất bại).
-- **$M_5$ — Training Throughput & Wall Time ($FPS$ & $T_{wall}$):**
-  $$FPS = \frac{\text{Total Timesteps}}{T_{wall}}\ (\text{steps/second})$$
-  *Ý nghĩa:* Tốc độ thực thi và thời gian tính toán thực tế của pipeline trên phần cứng GPU NVIDIA GeForce RTX 3050 Laptop GPU.
+- **$M_4$ — Sample Efficiency ($SE_{50}$):** Số bước tương tác môi trường (timesteps) tối thiểu để đạt $SR \ge 50\%$. Nếu sau toàn bộ ngân sách vẫn không đạt $50\%$, $SE_{50} = \infty$ (đại diện cho sụp đổ học tập).
+- **$M_5$ — Training Throughput & Wall Time ($FPS$ & $T_{wall}$):** Tốc độ thực thi trên GPU NVIDIA RTX 3050 Laptop GPU.
 
-#### Metric Bổ Trợ: Hệ Số Đồng Bộ Lý Thuyết - Thực Nghiệm (Mechanistic Alignment)
-- **$M_6$ — Correlation: Empirical Success vs. $sa\_uniform$ ($r_{sa}$):**
-  $$r_{sa} = \text{Corr}(P(\text{success} \mid \tau_i), sa\_uniform_i)$$
-  *Ý nghĩa:* Đo lường mức độ tương quan (Pearson & Spearman) giữa xác suất thành công thực tế của mô hình với nhãn độ khó lý thuyết MDP từ dataset NavSim, chứng minh tính hợp lý khoa học của proxy môi trường.
+#### Nhóm Metrics Giải Phẫu Động Học Nội Tại (Internal Learning Dynamics & Behavioral Metrics)
+- **$D_1$ — Policy Entropy Decay Rate ($\Delta \mathcal{H}_\pi / \Delta t$):** Tốc độ suy giảm entropy của chính sách, phát hiện hiện tượng thăm dò bị đông cứng sớm.
+- **$D_2$ — Value Estimation Error ($\mathbb{E}[|Q(s, a) - V^*(s)|]$):** Sai số ước lượng hàm giá trị, đo lường sự ảo tưởng hoặc phẳng lì của gradient.
+- **$D_3$ — Dithering & Collision Index ($CI$):** Tỷ lệ phần trăm các bước đi bị rơi vào vòng lặp dao động qua lại tại chỗ hoặc va chạm liên hoàn tại mép cửa hẹp.
 
 ---
 
-### 2.3. Điều Kiện Kiểm Soát & Chuẩn Hóa (Controlled Parameters)
-
-- **Thuật toán DRL đại diện:**
-  - **PPO (On-policy):** Đại diện cho họ Policy Gradient ổn định cao, tối ưu bằng clipped objective.
-  - **DQN (Off-policy):** Đại diện cho họ Value-based với Experience Replay và Target Network.
-  - **A2C (Synchronous On-policy):** Dùng đối chứng tốc độ và cập nhật đồng bộ.
-- **Phần cứng thực nghiệm:** NVIDIA GeForce RTX 3050 Laptop GPU (CUDA 12.1, PyTorch 2.5.1+cu121) + 16-core CPU.
-- **Độ tin cậy thống kê:** Tối thiểu **$N = 5$ random seeds độc lập** (`[10, 20, 30, 40, 50]`) cho mỗi cấu hình thực nghiệm.
-- **Ngân sách huấn luyện chuẩn:** $100,000$ steps (PPO, DQN) per run, đảm bảo đủ thời gian quan sát hiện tượng hội tụ hoặc sụp đổ.
-
----
-
-## 3. THIẾT KẾ CHI TIẾT 4 MA TRẬN THỰC NGHIỆM
-
-Hệ thống thực nghiệm được thiết kế thành 4 ma trận tương tác nhằm bóc tách quan hệ nhân quả giữa từng nhóm đặc trưng môi trường với 3 trụ cột hiệu suất của DRL agents:
+## 3. THIẾT KẾ CHI TIẾT 4 KHỐI THỰC NGHIỆM HỌC THUẬT
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              CẤU TRÚC 4 MA TRẬN THỰC NGHIỆM                            │
-│                                                                                        │
-│   [MA TRẬN 1: V1 x V2] ──► Mức độ đói tín hiệu x Mật độ thưởng môi trường              │
-│            │               (Khảo sát Tỷ lệ thành công & Hiệu suất mẫu - Ngưỡng gãy đổ) │
-│            ▼                                                                           │
-│   [MA TRẬN 2: V3 x V1] ──► Quy mô & Topology bản đồ x Mức độ đói tín hiệu              │
-│            │               (Khảo sát Khả năng tổng quát hóa & Độ nhạy diện tích)       │
-│            ▼                                                                           │
-│   [MA TRẬN 3: V4 x V5] ──► Chiều dài hành trình x Ràng buộc động học Robot             │
-│            │               (Khảo sát Suy giảm hiệu năng theo cự ly & Kích thước xe)    │
-│            ▼                                                                           │
-│   [MA TRẬN 4: V6]      ──► Chiến lược Curriculum thích nghi môi trường                 │
-│                            (Cơ chế phục hồi hiệu suất trong môi trường cực đoan)       │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              LỘ TRÌNH 4 KHỐI THỰC NGHIỆM HỌC THUẬT                              │
+│                                                                                                 │
+│   [KHỐI 1: BÓC TÁCH ĐIỂM NGHẼN CHI PHỐI]                                                        │
+│   Đo lường độ nhạy và phân rã mức độ ảnh hưởng của từng đặc trưng môi trường:                   │
+│   Topology ($V_3$) vs Cự ly ($V_5$) vs Thân xe ($V_4$) vs Mật độ thưởng ($V_2$)                 │
+│            │                                                                                    │
+│            ▼                                                                                    │
+│   [KHỐI 2: GIẢI PHẪU SỰ BIẾN DẠNG HÀNH VI & ĐỘNG HỌC HỌC TẬP]                                   │
+│   Phân tích cơ chế suy thoái nội tại: Entropy Collapse, Value Divergence, Dithering             │
+│            │                                                                                    │
+│            ▼                                                                                    │
+│   [KHỐI 3: THỬ THÁCH GIỚI HẠN CỦA CÁC GIẢI PHÁP KINH ĐIỂN]                                     │
+│   Stress-test: Curriculum Learning, Hindsight Experience Replay (HER), Potential Shaping        │
+│   ──► Xác định ranh giới mà từng giải pháp thất bại!                                            │
+│            │                                                                                    │
+│            ▼                                                                                    │
+│   [KHỐI 4: TỔNG HỢP NGUYÊN LÝ THIẾT KẾ CHO PHYSICAL AI]                                         │
+│   Xác định ranh giới: Vùng DRL tự giải quyết vs Vùng bắt buộc can thiệp môi trường / Hybrid     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 3.1. MA TRẬN 1: $V_1 \times V_2$ — Tác Động Phối Hợp Giữa Mức Độ Đói Tín Hiệu Tác Vụ và Mật Độ Thưởng Môi Trường
-- **Câu hỏi nghiên cứu:** *Đặc trưng đói tín hiệu của tác vụ ($V_1$) ảnh hưởng như thế nào đến Tỷ lệ thành công ($M_1$) và Hiệu suất mẫu ($M_4$) của DRL agents dưới các cấu hình mật độ thưởng môi trường ($V_2$) khác nhau? Đâu là ngưỡng gãy đổ (Phase Transition Threshold)?*
-- **Ý nghĩa đối với đề tài:** Xác định giới hạn chịu đựng của DRL agents trước tính chất thưởng thưa tự nhiên của môi trường vật lý. Kiểm chứng xem kỹ thuật định hình phần thưởng (Reward Shaping) có thực sự giải quyết được bài toán thiếu đói tín hiệu mà không làm lệch chính sách tối ưu hay không.
+### 3.1. KHỐI THỰC NGHIỆM 1: Định Lượng Độ Nhạy & Phân Rã Điểm Nghẽn Môi Trường (Sensitivity & Bottleneck Attribution)
+- **Câu hỏi khoa học:** *Khi một DRL agent thất bại trong điều hướng thực tế, yếu tố môi trường nào là nguyên nhân chính: Quy mô không gian lớn, hành trình dài, thân xe bị nghẽn ở cửa hẹp, hay do hàm thưởng quá thưa?*
+- **Phương pháp luận:** Thực hiện thiết kế phân rã nhân tố đa biến (Factorial Sensitivity Design) kết hợp phân tích phương sai **Two-way & Three-way ANOVA** để xác định phần trăm phương sai ($\eta^2$ effect size) đóng góp vào sự sụt giảm của $SR$, Generalization Gap và $SE_{50}$.
 
-#### Bảng Cấu Hình Ma Trận 1 ($V_1 \times V_2$):
+#### Thiết kế Ma Trận Khối 1:
 
-| $V_1$ (Task Starvation) \ $V_2$ (Reward Density) | **R1: Pure Sparse** (Tự nhiên) | **R3: Distance Dense** (Dày) | **R4: Progress Dense** (Tiến độ) | **R6: Potential Shaped** (Bảo toàn) |
-| :--- | :---: | :---: | :---: | :---: |
-| **Easy** ($sa \ge 0.15$) | Config 1.1 | Config 1.2 | Config 1.3 | Config 1.4 |
-| **Medium** ($0.05 \le sa < 0.15$) | Config 1.5 | Config 1.6 | Config 1.7 | Config 1.8 |
-| **Hard** ($0 < sa < 0.05$) | Config 1.9 | Config 1.10 | Config 1.11 | Config 1.12 |
-| **Starved** ($sa = 0$) | Config 1.13 | Config 1.14 | Config 1.15 | Config 1.16 |
+| Cặp Biến Tương Tác | Mục Tiêu Phân Rã Nhân Quả | Chỉ Số Trọng Tâm | Quy Mô Runs ($N=5$) |
+| :--- | :--- | :--- | :---: |
+| **$V_1 \times V_2$**<br>(Đói tín hiệu $\times$ Mật độ thưởng) | Đo lường mức độ nhạy cảm của gradient trước độ thưa phần thưởng ở từng cấp độ nhiệm vụ ($sa\_uniform$). | Success Rate ($M_1$), Sample Efficiency ($M_4$) | 16 configs $\times$ 2 algos $\times$ 5 seeds = **160 runs** |
+| **$V_3 \times V_5$**<br>(Quy mô bản đồ $\times$ Chiều dài đường) | Tách biệt ảnh hưởng giữa "không gian tìm kiếm bùng nổ" ($|S| \propto \text{main\_m2}$) và "chuỗi quyết định dài" ($d_{bfs}$). | Generalization Gap ($M_3$), SPL ($M_{1b}$) | 12 configs $\times$ 2 algos $\times$ 5 seeds = **120 runs** |
+| **$V_4 \times V_5$**<br>(Thân xe robot $\times$ Cửa hẹp/Hành trình) | Đo lường mức độ suy thoái khi thân xe lớn (Jackal) đối mặt với các cự ly có cửa hẹp so với thân xe nhỏ (TB4). | Tỷ lệ va chạm, $SE_{50}$, Generalization Gap | 12 configs $\times$ 2 algos $\times$ 5 seeds = **120 runs** |
 
-- **Thông số cố định:** Robot = `turtlebot4`, Map pool = `grid-turtlebot4-v2` train/val split.
-- **Quy mô thực nghiệm:** 16 ô cấu hình $\times$ 2 thuật toán (PPO, DQN) $\times$ 5 seeds = **160 runs**.
 - **Giả thuyết khoa học cần kiểm chứng ($H_1$):**
-  1. Dưới môi trường thưởng thưa tự nhiên (R1), tồn tại một điểm gãy đổ sắc nét (*sharp phase transition*): Hiệu suất sụp đổ từ $SR > 80\%$ ở Easy xuống $SR \approx 0\%$ ở Hard và Starved do hiện tượng Signal Starvation triệt tiêu tín hiệu học.
-  2. Dưới hàm thưởng Potential-based (R6), agent duy trì $SR > 60\%$ trên cả tập Starved mà vẫn đạt $SPL$ tiệm cận tối ưu nhờ bảo toàn thứ tự ưu tiên chính sách của Ng et al. (1999).
-  3. DQN có hiệu suất mẫu ($SE_{50}$) tốt hơn PPO trong các bài toán Medium nhờ cơ chế tái sử dụng mẫu (Experience Replay), nhưng dễ phân kỳ hơn PPO khi rơi vào môi trường Starved kết hợp hàm thưởng R3 do lỗi ước lượng Q-value tích lũy.
+  - Chiều dài hành trình ($d_{bfs}$) là nguyên nhân chi phối gây suy giảm $SE_{50}$ (hiệu suất mẫu), trong khi quy mô bản đồ ($C_{topo}$) là nguyên nhân chi phối nới rộng Generalization Gap ($\Delta_{gen}$).
+  - Kích thước thân xe robot ($V_4$) tạo ra một ngưỡng phi tuyến tính: Khi tỷ lệ độ rộng thân xe / độ rộng cửa vượt quá $0.75$, hiệu suất mẫu suy giảm theo hàm mũ bất kể thuật toán DRL nào được sử dụng.
 
 ---
 
-### 3.2. MA TRẬN 2: $V_3 \times V_1$ — Tác Động Của Quy Mô & Cấu Trúc Topology Bản Đồ Đến Khả Năng Tổng Quát Hóa
-- **Câu hỏi nghiên cứu:** *Quy mô diện tích di chuyển (`main_m2`) và độ phức tạp topology bản đồ ($V_3$) làm suy giảm Tỷ lệ thành công ($M_1$) và mở rộng Generalization Gap ($M_3$) như thế nào ở từng cấp độ đói tín hiệu ($V_1$)?*
-- **Ý nghĩa đối với đề tài:** Phân định rõ ràng ảnh hưởng giữa hai yếu tố môi trường: Sự thất bại của agent là do **không gian tìm kiếm trạng thái bùng nổ** ($|S| \propto \text{main\_m2}$) hay do **cấu trúc hình học vật cản ngăn cách** tạo ra bẫy tín hiệu (ngõ cụt, phòng cô lập).
+### 3.2. KHỐI THỰC NGHIỆM 2: Giải Phẫu Động Học Học Tập & Sự Biến Dạng Hành Vi (Learning Dynamics & Behavioral Distortion)
+- **Câu hỏi khoa học:** *Các yếu tố môi trường tiêu cực làm biến dạng quá trình học và hành vi của agent thông qua cơ chế nào bên trong mạng nơ-ron?*
+- **Phương pháp luận:** Trích xuất log nội tại từng 1,000 steps về: Policy Entropy, Value Estimation, và quỹ đạo di chuyển thực tế.
 
-#### Bảng Cấu Hình Ma Trận 2 ($V_3 \times V_1$):
-
-| $V_3$ (Map Topology Scale) \ $V_1$ (Task Level) | **Easy Tasks** | **Medium Tasks** | **Hard Tasks** | **Starved Tasks** |
-| :--- | :---: | :---: | :---: | :---: |
-| **Small Maps** ($\text{main\_m2} < 30\ \text{m}^2$) | Config 2.1 | Config 2.2 | Config 2.3 | Config 2.4 |
-| **Medium Maps** ($30 \le \text{main\_m2} < 50\ \text{m}^2$) | Config 2.5 | Config 2.6 | Config 2.7 | Config 2.8 |
-| **Large Maps** ($\text{main\_m2} \ge 50\ \text{m}^2$) | Config 2.9 | Config 2.10 | Config 2.11 | Config 2.12 |
-
-- **Thông số cố định:** Robot = `turtlebot4`, Reward = R6 (Potential-based để đảm bảo agent nhận được tín hiệu học nền).
-- **Quy mô thực nghiệm:** 12 ô cấu hình $\times$ 2 thuật toán $\times$ 5 seeds = **120 runs**.
-- **Giả thuyết khoa học cần kiểm chứng ($H_2$):**
-  1. Trên bản đồ Small, tác tử đạt Generalization Gap thấp ($\Delta_{gen} < 5\%$) ngay cả trên task Hard vì đường kính đồ thị nhỏ hạn chế không gian lạc lối của agent.
-  2. Trên bản đồ Large, Generalization Gap nới rộng mạnh mẽ ($\Delta_{gen} > 25\%$) đối với task Hard và Starved, phản ánh hiện tượng agent bị "học vẹt" (overfitting) các lộ trình cụ thể trong tập train và thất bại khi cấu trúc phòng ốc ở tập test thay đổi.
+#### Các Hiện Tượng Lỗi Cần Kiểm Chứng & Đo Lường:
+1. **Premature Entropy Collapse (Đông cứng thăm dò):** 
+   - *Hiện tượng:* Trong môi trường có thân xe lớn hoặc hành lang hẹp, penalty va chạm lặp lại quá nhanh khiến entropy của policy giảm dốc đứng ($\mathcal{H} \to 0$) trước khi agent tìm thấy goal lần đầu tiên.
+   - *Đo lường:* Vẽ đồ thị đường cong Entropy Decay $\mathcal{H}(t)$ so sánh giữa TurtleBot 4 và Clearpath Jackal.
+2. **Value Divergence & Overestimation (Ảo tưởng hàm giá trị):**
+   - *Hiện tượng:* Dưới hàm thưởng Dense R3 (Distance-based), sai số ước lượng $Q(s, a)$ tích lũy theo chiều dài hành trình, khiến agent ảo tưởng rằng mình đang tiến bộ ngay cả khi đang bị kẹt ở góc tường.
+   - *Đo lường:* Sai số $|Q(s, a) - V^*(s)|$ theo từng bước thời gian.
+3. **Phân Loại Hành Vi Lệch Chuẩn (Failure Typology):**
+   - *Dithering:* Tỷ lệ episode mà robot lặp lại 2 hành động đối nghịch liên tiếp $\ge 10$ lần tại nút thắt.
+   - *Premature Freezing:* Tỷ lệ episode robot dừng hẳn hoặc quay tròn tại chỗ sau khi va chạm nhẹ.
 
 ---
 
-### 3.3. MA TRẬN 3: $V_4 \times V_5$ — Ảnh Hưởng Của Chiều Dài Hành Trình và Ràng Buộc Động Học Robot
-- **Câu hỏi nghiên cứu:** *Chiều dài hành trình Start-Goal ($V_4$) làm suy giảm độ chính xác và tốc độ hội tụ ra sao khi tương tác với các cấu trúc động học và kích thước thân xe khác nhau ($V_5$)?*
-- **Ý nghĩa đối với đề tài:** Gắn kết lý thuyết DRL với bài toán Physical AI thực tế. Trong môi trường thực, robot không phải là chất điểm vô hình mà có kích thước va chạm (footprint) và cơ chế di chuyển cụ thể (vi sai, toàn hướng, skid-steer). Thí nghiệm này định lượng mức độ suy thoái hiệu năng khi chiều dài nhiệm vụ tăng dần đối với từng kiểu thân xe.
+### 3.3. KHỐI THỰC NGHIỆM 3: Thử Thách & Đánh Giá Giới Hạn Của Các Giải Pháp Can Thiệp Kinh Điển (Stress-Testing Canonical Mitigations)
+Đây là **trọng tâm học thuật phản ánh năng lực nghiên cứu của đề tài**: Đưa các giải pháp kinh điển của cộng đồng DRL vào "thử lửa" trước các điểm nghẽn môi trường đã bóc tách ở Khối 1 & 2.
 
-#### Bảng Cấu Hình Ma Trận 3 ($V_4 \times V_5$):
+#### 3 Giải Pháp Can Thiệp Được Kiểm Chứng:
+1. **Curriculum Learning (CL — $M_1$):** Tăng dần độ khó môi trường (từ cự ly ngắn $\to$ dài, từ hành lang rộng $\to$ hẹp, từ $sa$ cao $\to$ thấp).
+2. **Hindsight Experience Replay / Goal Relabeling (HER — $M_2$):** Tái gán mục tiêu đạt được từ các bước đi dở dang để tạo tín hiệu thưởng nhân tạo từ thất bại.
+3. **Potential-Based Reward Shaping (PBRS — $M_3$):** Bơm gradient thế năng bảo toàn chính sách tối ưu.
 
-| $V_4$ (Path Horizon) \ $V_5$ (Robot Model) | **TurtleBot 4** (Nhỏ tròn, vi sai) | **JetAuto Pro** (Vừa, toàn hướng omni) | **Clearpath Jackal** (Lớn chữ nhật, skid-steer) |
-| :--- | :---: | :---: | :---: |
-| **Short** (`1-3m`) | Config 3.1 | Config 3.2 | Config 3.3 |
-| **Medium** (`3-6m`) | Config 3.4 | Config 3.5 | Config 3.6 |
-| **Long** (`6-10m`) | Config 3.7 | Config 3.8 | Config 3.9 |
-| **Ultra-long** (`10m+`) | Config 3.10 | Config 3.11 | Config 3.12 |
+#### Ma Trận Thử Thách Giới Hạn Can Thiệp (Stress-Test Matrix):
 
-- **Thông số cố định:** Reward = R6, Dataset tương ứng cho mỗi robot (`grid-turtlebot4-v2`, `grid-jetauto_pro-v2`, `grid-clearpath_jackal-v2`).
-- **Quy mô thực nghiệm:** 12 ô cấu hình $\times$ 2 thuật toán $\times$ 5 seeds = **120 runs**.
+| Điểm Nghẽn Môi Trường (Identified Bottlenecks) | Baseline (DRL Thuần) | + Potential Shaping (PBRS) | + Curriculum Learning (CL) | + Goal Relabeling (HER) | + Phối Hợp (CL + HER) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **B1: Đói Tín Hiệu Do Cự Ly Rất Dài ($10\text{m}+$)** | Đo $SR, \Delta_{gen}, SE_{50}$ | Đánh giá hiệu quả | Đánh giá hiệu quả | Đánh giá hiệu quả | Đánh giá hiệp đồng |
+| **B2: Nút Thắt Thân Xe Lớn (Jackal Footprint)** | Đo $SR, \Delta_{gen}, SE_{50}$ | Đánh giá hiệu quả | Đánh giá hiệu quả | Đánh giá hiệu quả | Đánh giá hiệp đồng |
+| **B3: Bẫy Topology Ngõ Cụt Phức Tạp (Dead-ends)**| Đo $SR, \Delta_{gen}, SE_{50}$ | Đánh giá hiệu quả | Đánh giá hiệu quả | Đánh giá hiệu quả | Đánh giá hiệp đồng |
+
 - **Giả thuyết khoa học cần kiểm chứng ($H_3$):**
-  1. Với hành trình ngắn (`1-3m`), cả 3 robot đều đạt $SR > 90\%$, sự khác biệt về kích thước thân xe chưa bộc lộ rõ rệt.
-  2. Khi hành trình kéo dài sang `10m+`, Clearpath Jackal suy giảm $SR$ và $SPL$ nhanh nhất do kích thước thân xe lớn dễ va chạm khi đi qua các cửa hẹp, làm gia tăng hiện tượng đói tín hiệu do va chạm kết thúc sớm episode.
-  3. JetAuto Pro đạt Sample Efficiency ($SE_{50}$) vượt trội trên các hành trình dài nhờ động học toàn hướng (omni) cho phép tịnh tiến và né vật cản mà không cần thực hiện chuỗi xoay thân xe phức tạp.
+  - **Giới hạn của HER:** HER cực kỳ hiệu quả đối với bài toán cự ly dài (B1) vì nó biến các trajectory dài không tới đích thành các bài học định hướng; nhưng **HER hoàn toàn bất lực trước nút thắt thân xe lớn (B2)** vì các goal ảo được tái gán vẫn nằm trước cửa hẹp, không cung cấp được thông tin làm sao để thân xe lách qua khe hẹp mà không chạm tường.
+  - **Giới hạn của Curriculum:** Curriculum giải phóng được hiện tượng Entropy Collapse ở Khối 2, giúp tăng $SR$ trên bài toán thân xe lớn (B2), nhưng làm tăng thời gian huấn luyện tổng thể ($T_{wall}$).
+  - **Giới hạn của PBRS:** PBRS giúp tăng tốc hội tụ nhưng không làm giảm Generalization Gap trên bản đồ kiểm thử có vách ngăn mới.
 
 ---
 
-### 3.4. MA TRẬN 4: $V_6$ — Đánh Giá Năng Lực Can Thiệp Của Chiến Lược Environmental Curriculum
-- **Câu hỏi nghiên cứu:** *Liệu việc thay đổi phân phối môi trường theo chiến lược học tăng dần (Curriculum Learning — $V_6$) có thể giúp agent vượt qua hiện tượng Signal Starvation trong các môi trường cực đoan (Starved Tasks) mà không cần can thiệp méo mó hàm thưởng hay không?*
-- **Ý nghĩa đối với đề tài:** Đóng vai trò là giải pháp phương pháp luận hoàn thiện đề tài. Chứng minh rằng thay vì cố gắng sửa hàm thưởng (vốn có thể tạo ra các hành vi cục bộ sai lệch), việc tổ chức lại lộ trình tiếp xúc với các đặc trưng môi trường từ dễ đến khó là giải pháp tự nhiên và bền vững nhất cho Physical AI.
-
-#### Bảng Cấu Hình Ma Trận 4 ($V_6$):
-
-| Chiến Lược Curriculum ($V_6$) | Cơ Chế Điều Tiết Môi Trường | Môi Trường Thưởng Thưa (R1) | Môi Trường Thưởng Shaped (R6) |
-| :--- | :--- | :---: | :---: |
-| **C0: Không có Curriculum** | Lấy mẫu ngẫu nhiên đồng đều trên toàn bộ không gian task | Config 4.1 | Config 4.2 |
-| **C1: Level Curriculum** | Chuyển tầng (`easy` $\to$ `medium` $\to$ `hard` $\to$ `starved`) khi $SR \ge 70\%$ | Config 4.3 | Config 4.4 |
-| **C2: Adaptive SA Curriculum**| Hạ ngưỡng $sa_{min}$ liên tục từ $0.30 \to 0.0$ theo tiến độ training | Config 4.5 | Config 4.6 |
-
-- **Thông số cố định:** Robot = `turtlebot4`. Đánh giá hiệu năng trực tiếp trên tập kiểm thử gồm **100% Starved Tasks**.
-- **Quy mô thực nghiệm:** 6 ô cấu hình $\times$ 2 thuật toán $\times$ 5 seeds = **60 runs**.
-- **Giả thuyết khoa học cần kiểm chứng ($H_4$):**
-  1. Dưới môi trường thưởng thưa tự nhiên (R1), tác tử không có curriculum (C0) hoàn toàn thất bại ($SR = 0\%$) trên tập Starved Tasks do không bao giờ nhận được tín hiệu thưởng ban đầu.
-  2. Chiến lược Adaptive SA Curriculum (C2) giúp tác tử tích lũy được biểu diễn không gian từ các vùng giàu tín hiệu, qua đó đạt $SR > 45\%$ trên tập Starved ngay cả khi chỉ sử dụng phần thưởng thuần R1 (Sparse), thu hẹp khoảng cách hiệu năng mà không cần dùng đến Dense Reward.
+### 3.4. KHỐI THỰC NGHIỆM 4: Tổng Hợp Ranh Giới Khả Thi & Nguyên Lý Thiết Kế Cho Physical AI (Synthesis & Design Guidelines)
+- **Mục tiêu:** Rút ra bản đồ ranh giới khoa học (Feasibility Boundary Map) đóng góp cho cộng đồng nghiên cứu:
+  1. **Vùng Giải Quyết Được Bằng Thuật Toán (Algorithm-Solvable Zone):** Các cấu hình môi trường mà DRL thuần túy kết hợp CL hoặc HER có thể tự giải quyết triệt để ($SR > 80\%, \Delta_{gen} < 10\%$).
+  2. **Vùng Bắt Buộc Can Thiệp Môi Trường / Phần Cứng (Environment-Redesign Zone):** Các ngưỡng hình học mà tại đó DRL sụp đổ do rào cản vật lý (ví dụ: khi tỷ lệ kích thước thân xe / độ rộng cửa $> 0.85$), đòi hỏi phải tái thiết kế độ rộng hành lang hoặc chuyển giao sang kiến trúc lai (Hybrid Planning + DRL).
 
 ---
 
-## 4. TỔNG HỢP KẾ HOẠCH PHÂN BỔ TÀI NGUYÊN & THỜI GIAN CHẠY
+## 4. KẾ HOẠCH TÀI NGUYÊN & PHÂN BỔ THỜI GIAN THỰC NGHIỆM
 
-Toàn bộ ma trận được thiết kế tối ưu để có thể chạy tự động, lưu kết quả liên tục và tận dụng tối đa năng lực phần cứng hiện có của máy trạm:
+Toàn bộ hệ thống chạy thực nghiệm được thiết kế tự động, lưu trữ liên tục (crash-safe) và tối ưu hóa tối đa trên phần cứng GPU NVIDIA RTX 3050 Laptop GPU:
 
-| Nhóm Thực Nghiệm | Ma Trận Khảo Sát | Cấu Hình | Thuật Toán | Số Seeds | Tổng Số Runs | Thời Gian Ước Tính (GPU RTX 3050) |
+| Khối Thực Nghiệm | Nội Dung Khảo Sát | Cấu Hình | Thuật Toán | Số Seeds | Tổng Số Runs | Thời Gian Ước Tính (RTX 3050) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **EXP 1: Task $\times$ Reward** | $V_1 \times V_2$ | 16 | PPO, DQN | 5 | **160 runs** | ~2.5 giờ |
-| **EXP 2: Topology $\times$ Task**| $V_3 \times V_1$ | 12 | PPO, DQN | 5 | **120 runs** | ~2.0 giờ |
-| **EXP 3: Horizon $\times$ Robot** | $V_4 \times V_5$ | 12 | PPO, DQN | 5 | **120 runs** | ~2.0 giờ |
-| **EXP 4: Curriculum** | $V_6 \times V_2$ | 6 | PPO, DQN | 5 | **60 runs** | ~1.0 giờ |
-| **TỔNG CỘNG TOÀN DỰ ÁN** | — | **46 configs** | **2 algos** | **5** | **460 runs** | **~7.5 giờ** |
+| **Khối 1: Sensitivity & Attribution** | Phân rã độ nhạy: $V_1 \times V_2$, $V_3 \times V_5$, $V_4 \times V_5$ | 40 | PPO, DQN | 5 | **400 runs** | ~6.0 giờ |
+| **Khối 2: Learning Dynamics** | Trích xuất Entropy, Value Error, Dithering | (Tích hợp trong Khối 1 & 3) | PPO, DQN | 5 | — | (Ghi log song song) |
+| **Khối 3: Stress-Testing Mitigations** | Thử thách HER, Curriculum, Potential Shaping | 15 | PPO, DQN | 5 | **150 runs** | ~2.5 giờ |
+| **TỔNG CỘNG TOÀN DỰ ÁN** | Khảo sát toàn diện hành vi & giới hạn can thiệp | **55 configs** | **2 algos** | **5** | **550 runs** | **~8.5 giờ** |
 
 > [!TIP]
-> **Khả năng hoàn thành:** Với tốc độ thực thi ~36,000 FPS của NavSim và khả năng tính toán song song 5 tiến trình worker trên GPU RTX 3050 (PyTorch 2.5.1 CUDA), toàn bộ 460 runs có thể hoàn tất trong **~7.5 giờ chạy liên tục**. Hệ thống runner sẽ ghi trực tiếp kết quả vào file CSV sau mỗi run để đảm bảo tính an toàn (crash-safe) và hỗ trợ tiếp tục (resume) nếu bị gián đoạn.
+> **Khả năng thực thi vượt trội:** Nhờ tốc độ mô phỏng cực cao của NavSim (~36,000 FPS) kết hợp với 5 tiến trình worker song song chạy trực tiếp trên GPU CUDA (PyTorch 2.5.1), toàn bộ 550 runs của công trình nghiên cứu quy mô này có thể hoàn tất trong vòng **~8.5 giờ chạy liên tục**.
 
 ---
 
-## 5. QUY TRÌNH PHÂN TÍCH THỐNG KÊ & CHỨNG MINH GIẢ THUYẾT
+## 5. QUY TRÌNH PHÂN TÍCH THỐNG KÊ & CHỨNG MINH KHOA HỌC
 
-Nhằm đáp ứng yêu cầu của một báo cáo khoa học chuẩn mực, dữ liệu thu thập từ 460 runs sẽ được phân tích qua quy trình thống kê 3 bước:
+Để đảm bảo tính thuyết phục tuyệt đối của một công trình nghiên cứu khoa học chất lượng cao:
 
-1. **Ước Lượng Khoảng Tin Cậy (Confidence Interval Estimation):**
-   - Với mọi độ đo thuộc 3 trụ cột hiệu suất ($M_1 \dots M_5$), công bố giá trị trung bình kèm khoảng tin cậy 95%:
-     $$\text{CI}_{95\%} = \bar{X} \pm 1.96 \cdot \frac{s}{\sqrt{N}} \quad (\text{với } N=5\text{ random seeds})$$
-   - Áp dụng kỹ thuật Bootstrap phi tham số ($B = 10,000$ resamples) cho các chỉ số có phân phối lệch như $SPL$ và Generalization Gap.
-2. **Kiểm Định Ý Nghĩa Thống Kê & Phân Tích Tương Tác (Hypothesis Testing):**
-   - **Two-way ANOVA:** Phân tích ảnh hưởng chính (*main effects*) và tương tác chéo (*interaction effects*) của các cặp đặc trưng môi trường ($V_1 \times V_2$, $V_3 \times V_1$, $V_4 \times V_5$).
-   - **Tukey’s Honestly Significant Difference (HSD):** Kiểm định hậu nghiệm (*post-hoc*) để so sánh định lượng sự khác biệt giữa các mức phần thưởng (R1 vs R4 vs R6) và các kiểu robot với mức ý nghĩa $p < 0.01$.
-   - **Mann-Whitney U Test:** Kiểm định phi tham số khẳng định sự vượt trội có ý nghĩa thống kê của phương pháp Curriculum Learning (C2) so với baseline (C0) trên các task Starved.
-3. **Phân Tích Cơ Chế Định Lượng (Mechanistic Validation):**
-   - Lập đồ thị hồi quy và tính hệ số tương quan tuyến tính $R^2$ giữa nhãn `sa_uniform` và tỷ lệ thành công thực nghiệm $SR$ nhằm khẳng định tính chuẩn xác của proxy đo lường Signal Starvation sinh ra từ cấu trúc môi trường.
+1. **Độ Tin Cậy Thống Kê ($N = 5$ Random Seeds):**
+   - Mọi kết quả công bố đều có khoảng tin cậy 95% ($\text{CI}_{95\%}$) được tính toán bằng kỹ thuật Bootstrap phi tham số ($B = 10,000$ resamples).
+2. **Phân Tích ANOVA & Effect Size ($\eta^2$):**
+   - Sử dụng Three-way ANOVA để định lượng tỷ lệ phương sai của $SR$, Generalization Gap và Sample Efficiency được giải thích bởi từng yếu tố môi trường, khẳng định yếu tố nào là điểm nghẽn có ý nghĩa thống kê ($p < 0.001$).
+3. **Kiểm Định Giới Hạn Của Giải Pháp Can Thiệp:**
+   - Dùng **Tukey HSD Post-hoc Test** và **Mann-Whitney U Test** để chứng minh sự khác biệt có ý nghĩa thống kê giữa Baseline vs HER vs Curriculum vs Potential Shaping trên từng nhóm điểm nghẽn cụ thể.
 
 ---
 
 ## 6. TIÊU CHÍ HOÀN THÀNH (DEFINITION OF DONE - DoD CHECKLIST)
 
-- [x] **Tập trung vào mục tiêu chính của đề tài:** Khảo sát và định lượng ảnh hưởng của các đặc trưng môi trường (*environmental properties*) đến hiệu suất cốt lõi của DRL agents trong Physical AI.
-- [x] **Định vị đúng vai trò của Signal Starvation:** Đóng vai trò là cơ chế lý giải khoa học trung tâm để giải thích nguyên nhân gây suy giảm và sụp đổ hiệu suất khi cấu trúc môi trường thay đổi.
-- [x] **Cấu trúc rõ ràng 3 trụ cột hiệu suất chuẩn:**
-  1. *Độ chính xác / Tỷ lệ thành công (Success Rate & Cumulative Reward, kèm SPL).*
-  2. *Khả năng tổng quát hóa (Generalization Gap trên môi trường Test chưa từng biết).*
-  3. *Hiệu suất mẫu & Tốc độ huấn luyện (Sample Efficiency $SE_{50}$ & FPS).*
-- [x] **Thiết kế ma trận chi tiết 4 nhóm thực nghiệm ($V_1 \times V_2$, $V_3 \times V_1$, $V_4 \times V_5$, $V_6$)** với đầy đủ các giả thuyết khoa học ($H_1 \dots H_4$).
-- [x] **Kế hoạch kiểm thử chặt chẽ với $N = 5$ random seeds độc lập**, đảm bảo độ tin cậy thống kê và khả năng thực thi khả thi trên GPU RTX 3050 (~7.5 giờ).
-- [ ] **Người dùng review và chốt phê duyệt thiết kế ma trận.**
+- [x] **Xóa bỏ tính hiển nhiên của hiện tượng:** Đặt trọng tâm vào việc định lượng mức độ ảnh hưởng của các yếu tố môi trường lên động học học tập và sự biến dạng hành vi của DRL agents.
+- [x] **Giải phẫu cơ chế suy thoái nội tại:** Phân tích Policy Entropy Collapse, Value Estimation Divergence, và các dạng hành vi lỗi (Dithering, Freezing).
+- [x] **Stress-test các giải pháp can thiệp kinh điển:** Kiểm chứng năng lực và chỉ ra ranh giới sụp đổ của Curriculum Learning, Hindsight Experience Replay (HER), và Potential-based Reward Shaping.
+- [x] **Bảo đảm 3 trụ cột metrics chuẩn:** Độ chính xác ($SR, G, SPL$), Khả năng tổng quát hóa ($\Delta_{gen}$), và Hiệu suất mẫu ($SE_{50}$).
+- [x] **Kế hoạch kiểm thử $N = 5$ seeds độc lập** với ngân sách thời gian thực thi khả thi (~8.5 giờ trên GPU RTX 3050).
+- [ ] **Người dùng review và chốt phê duyệt bản thiết kế ma trận thực nghiệm.**
